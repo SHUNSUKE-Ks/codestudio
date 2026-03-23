@@ -55,7 +55,7 @@ const FileNode: React.FC<{ node: TreeNode }> = ({ node }) => {
 // ── Main component ──
 export const FileSidebar: React.FC = () => {
   const sidebarWidth = useLayoutStore((s) => s.sidebarWidth)
-  const { fileTree, createFile, createFolder } = useProjectStore()
+  const { fileTree, selectRoot, rootHandle, createFile, createFolder } = useProjectStore()
   const { onMouseDown } = useResizable()
   const [newItemMode, setNewItemMode] = useState<'file' | 'folder' | null>(null)
   const [newItemName, setNewItemName] = useState('')
@@ -72,8 +72,13 @@ export const FileSidebar: React.FC = () => {
     <div className={styles.sidebar} style={{ width: sidebarWidth }}>
       {/* Header with action icons ⑤ */}
       <div className={styles.header}>
-        <span className={styles.headerTitle}>PROJECT_ROOT</span>
+        <span className={styles.headerTitle}>{rootHandle?.name?.toUpperCase() ?? 'PROJECT_ROOT'}</span>
         <div className={styles.headerIcons}>
+          <button
+            className={styles.headerIcon}
+            title="フォルダを開く"
+            onClick={selectRoot}
+          >📂</button>
           <button
             className={styles.headerIcon}
             title="新規フォルダ"
@@ -109,7 +114,10 @@ export const FileSidebar: React.FC = () => {
       <div className={styles.tree}>
         {fileTree.length === 0 ? (
           <div className={styles.empty}>
-            フォルダを選択してください
+            <button className={styles.openFolderBtn} onClick={selectRoot}>
+              📂 フォルダを開く
+            </button>
+            <p className={styles.emptyHint}>ローカルのフォルダを選択してください</p>
           </div>
         ) : (
           fileTree.map((n) => <FileNode key={n.path} node={n} />)
