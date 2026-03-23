@@ -1,0 +1,26 @@
+[
+  {
+    "id": "scene",
+    "label": "Scene Block",
+    "category": "NOVEL",
+    "code": "{\n  \"storyID\": \"arc_001\",\n  \"speaker\": \"\",\n  \"dialogue\": \"\",\n  \"bg\": \"\",\n  \"bgm\": \"\",\n  \"tags\": []\n}"
+  },
+  {
+    "id": "choice",
+    "label": "Choice Block",
+    "category": "NOVEL",
+    "code": "{\n  \"storyID\": \"arc_001\",\n  \"type\": \"choice\",\n  \"choices\": [\n    { \"label\": \"\", \"next\": \"\" },\n    { \"label\": \"\", \"next\": \"\" }\n  ]\n}"
+  },
+  {
+    "id": "event",
+    "label": "Event Block",
+    "category": "EVENT",
+    "code": "{\n  \"storyID\": \"arc_001\",\n  \"event\": \"\",\n  \"effect\": \"\",\n  \"condition\": \"\"\n}"
+  },
+  {
+    "id": "schema",
+    "label": "Novel Schema Root",
+    "category": "SCHEMA",
+    "code": "{\n  \"schema\": \"codestudio.v1\",\n  \"title\": \"\",\n  \"content\": []\n}"
+  }
+]

@@ -1,0 +1,59 @@
+.editorArea {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden; background: var(--bg); min-width: 0;
+}
+
+/* TabBar ⑥ */
+.tabs {
+  height: 36px; background: #0a0a0a;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-end;
+  overflow-x: auto; flex-shrink: 0;
+}
+.tabs::-webkit-scrollbar { height: 2px; }
+
+.tab {
+  display: flex; align-items: center; gap: 5px;
+  padding: 0 12px; height: 32px;
+  font-family: var(--font-mono); font-size: 10px;
+  cursor: pointer; color: var(--txt3);
+  border-top: 2px solid transparent;
+  border-right: 1px solid var(--border);
+  position: relative; top: 1px;
+  white-space: nowrap;
+  transition: color .15s, background .15s;
+  flex-shrink: 0;
+}
+.tab:hover { color: var(--txt2); background: rgba(255,255,255,.03); }
+.tabActive {
+  background: var(--bg) !important;
+  color: var(--p) !important;
+  border-top-color: var(--s) !important;
+  border-left: 1px solid var(--border);
+}
+.tabLang { color: var(--txt3); font-size: 9px; }
+.tabName { letter-spacing: .5px; }
+.tabDirty { color: var(--y); font-size: 9px; }
+.tabClose {
+  background: none; border: none; color: var(--txt3);
+  font-size: 9px; cursor: pointer; padding: 1px 2px;
+  border-radius: 2px; transition: color .15s;
+  margin-left: 2px;
+}
+.tabClose:hover { color: var(--pk); }
+
+/* Editor body */
+.editorWrap { flex: 1; overflow: hidden; }
+
+/* Welcome screen */
+.welcome {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px; color: var(--txt3);
+}
+.welcomeIcon { font-size: 48px; opacity: .3; }
+.welcomeTitle {
+  font-family: var(--font-mono); font-size: 20px;
+  letter-spacing: 6px; color: var(--txt3);
+}
+.welcomeSub { font-size: 12px; }

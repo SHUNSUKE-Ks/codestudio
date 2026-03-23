@@ -1,0 +1,31 @@
+[
+  {
+    "id": "novel",
+    "name": "Novel Project",
+    "description": "ノベルゲーム標準構成",
+    "folders": ["src", "src/scenarios", "src/assets", "src/assets/bg", "src/assets/chara", "src/assets/bgm", "src/assets/se"],
+    "files": [
+      { "path": "src/scenarios/main.json", "content": "{\n  \"schema\": \"codestudio.v1\",\n  \"title\": \"Main Story\",\n  \"content\": []\n}" },
+      { "path": "README.md", "content": "# Novel Project\n" }
+    ]
+  },
+  {
+    "id": "script",
+    "name": "Script Project",
+    "description": "スクリプト・シナリオ汎用構成",
+    "folders": ["scripts", "assets", "drafts"],
+    "files": [
+      { "path": "scripts/main.json", "content": "{\n  \"schema\": \"codestudio.v1\",\n  \"title\": \"\",\n  \"content\": []\n}" }
+    ]
+  },
+  {
+    "id": "game",
+    "name": "Game Project",
+    "description": "ゲーム開発向け構成",
+    "folders": ["src", "src/scenes", "src/data", "src/assets", "public"],
+    "files": [
+      { "path": "src/data/scenes.json", "content": "[]" },
+      { "path": "README.md", "content": "# Game Project\n" }
+    ]
+  }
+]

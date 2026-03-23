@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeStudio V1.1 — AI Editor Handoff Spec</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+/* ─── Variables ─── */
+:root {
+  --bg:     #080810;
+  --bg2:    #0f0f1a;
+  --bg3:    #141420;
+  --bg4:    #1a1a28;
+  --border: #1e1e30;
+  --border2:#2a2a3e;
+  --p:      #9fa7ff;
+  --s:      #bc87fe;
+  --c:      #00d9ff;
+  --pk:     #ff5f87;
+  --g:      #22dd88;
+  --y:      #ffd060;
+  --t:      #ffa9df;
+  --txt:    #e0e0f0;
+  --txt2:   #8888aa;
+  --txt3:   #444466;
+  --stepper-w: 220px;
+}
+
+/* ─── Reset ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font-family: 'Noto Sans JP', sans-serif;
+  line-height: 1.6;
+  overflow: hidden;
+  height: 100vh;
+}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ─── Root layout ─── */
+#root { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
+
+/* ─── Stepper (left) ─── */
+#stepper {
+  width: var(--stepper-w);
+  min-width: var(--stepper-w);
+  height: 100vh;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+  z-index: 100;
+}
+.st-brand {
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.st-app {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--p);
+  letter-spacing: 2px;
+  margin-bottom: 2px;
+}
+.st-ver {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--txt3);
+  letter-spacing: 3px;
+}
+.st-doc-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--g);
+  letter-spacing: 2px;
+  margin-top: 4px;
+  opacity: .7;
+}
+.st-items { flex: 1; padding: 10px 0; }
+.st-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all .2s;
+  border-left: 2px solid transparent;
+  position: relative;
+}
+.st-item:hover { background: rgba(159,167,255,.06); }
+.st-item.active {
+  border-left-color: var(--p);
+  background: rgba(159,167,255,.08);
+}
+.st-item.active .st-num { color: var(--p); }
+.st-item.active .st-name { color: var(--txt); }
+.st-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--txt3);
+  width: 20px;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+.st-name {
+  font-size: 11px;
+  color: var(--txt2);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.st-line {
+  position: absolute;
+  left: 15px;
+  bottom: -8px;
+  width: 1px;
+  height: 8px;
+  background: var(--border);
+}
+.st-item:last-child .st-line { display: none; }
+.st-nav {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.st-nav button {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--txt2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  padding: 5px 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all .2s;
+}
+.st-nav button:hover { border-color: var(--p); color: var(--p); }
+.st-key-hint {
+  padding: 8px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--txt3);
+  letter-spacing: 1px;
+  line-height: 1.8;
+}
+
+/* ─── Main scroll area ─── */
+#main {
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* ─── Section base ─── */
+.section {
+  min-height: 100vh;
+  padding: 50px 52px 80px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.section:last-child { border-bottom: none; }
+
+.sec-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.sec-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--p);
+  opacity: .6;
+}
+.sec-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--txt3);
+  text-transform: uppercase;
+}
+.sec-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(20px, 2.4vw, 30px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 6px;
+}
+.sec-sub {
+  font-size: 12px;
+  color: var(--txt2);
+  margin-bottom: 32px;
+}
+.sec-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 28px 0 18px;
+}
+.sec-divider span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--p);
+  opacity: .6;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sec-divider::before, .sec-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ─── Relation link ─── */
+.rel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--c);
+  background: rgba(0,217,255,.07);
+  border: 1px solid rgba(0,217,255,.2);
+  border-radius: 3px;
+  padding: 1px 7px;
+  cursor: pointer;
+  text-decoration: none;
+  margin: 0 2px;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.rel:hover { background: rgba(0,217,255,.14); color: var(--c); }
+.rel::before { content: '→ '; opacity: .6; }
+
+/* ─── Cards ─── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 3px;
+}
+.card.p::before { background: var(--p); }
+.card.s::before { background: var(--s); }
+.card.c::before { background: var(--c); }
+.card.pk::before { background: var(--pk); }
+.card.g::before { background: var(--g); }
+.card.y::before { background: var(--y); }
+.card-icon { font-size: 20px; margin-bottom: 8px; }
+.card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--txt2);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.card-val {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.card-desc { font-size: 11px; color: var(--txt2); line-height: 1.6; }
+
+/* ─── Code block ─── */
+.cb {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--txt2);
+  overflow-x: auto;
+}
+.cb-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--p);
+  opacity: .6;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.kw  { color: var(--s); }
+.kw2 { color: var(--p); }
+.str { color: var(--t); }
+.val { color: var(--c); }
+.cm  { color: var(--txt3); }
+.br  { color: var(--pk); }
+
+/* ─── Grid 2col ─── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+@media(max-width:900px){ .g2{grid-template-columns:1fr;} .g3{grid-template-columns:1fr 1fr;} }
+
+/* ─── Feature row ─── */
+.feat-list { display: flex; flex-direction: column; gap: 8px; }
+.feat {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+.feat-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  border-radius: 3px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.feat-tag.p { background:rgba(159,167,255,.12); color:var(--p); border:1px solid rgba(159,167,255,.3); }
+.feat-tag.s { background:rgba(188,135,254,.12); color:var(--s); border:1px solid rgba(188,135,254,.3); }
+.feat-tag.c { background:rgba(0,217,255,.1);    color:var(--c); border:1px solid rgba(0,217,255,.25); }
+.feat-tag.pk{ background:rgba(255,95,135,.1);   color:var(--pk);border:1px solid rgba(255,95,135,.25);}
+.feat-tag.g { background:rgba(34,221,136,.1);   color:var(--g); border:1px solid rgba(34,221,136,.25);}
+.feat-tag.y { background:rgba(255,208,96,.1);   color:var(--y); border:1px solid rgba(255,208,96,.25);}
+.feat h4 { font-size: 13px; margin-bottom: 3px; }
+.feat p  { font-size: 11px; color: var(--txt2); line-height: 1.6; }
+
+/* ─── Table ─── */
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.tbl th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--p);
+  background: rgba(159,167,255,.07);
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+}
+.tbl td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.03);
+  vertical-align: top;
+  color: var(--txt);
+}
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:nth-child(even) td { background: rgba(255,255,255,.015); }
+.em { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--c); }
+
+/* ─── Done cards ─── */
+.done-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.done-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+.done-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--g);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.done-badge {
+  font-size: 8px;
+  background: rgba(34,221,136,.1);
+  border: 1px solid rgba(34,221,136,.3);
+  color: var(--g);
+  border-radius: 3px;
+  padding: 1px 6px;
+  letter-spacing: 1px;
+}
+.done-list-items { list-style: none; }
+.done-list-items li {
+  font-size: 11px;
+  color: var(--txt2);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.done-list-items li:last-child { border-bottom: none; }
+.done-list-items li::before {
+  content: '□';
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(34,221,136,.4);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+/* ─── Flow diagram ─── */
+.flow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.flow-step {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.flow-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 8px;
+  text-align: center;
+  width: 100%;
+}
+.flow-icon { font-size: 16px; margin-bottom: 4px; }
+.flow-box strong { font-size: 11px; display: block; margin-bottom: 2px; }
+.flow-box span { font-size: 9px; color: var(--txt2); font-family: 'JetBrains Mono', monospace; }
+.flow-arrow {
+  display: flex;
+  align-items: center;
+  padding-top: 20px;
+  color: var(--p);
+  opacity: .5;
+  font-size: 16px;
+  min-width: 24px;
+  justify-content: center;
+  flex: 0;
+}
+
+/* ─── Cover section ─── */
+#s00 {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  background: radial-gradient(ellipse 70% 50% at 60% 40%, #100e28 0%, var(--bg) 100%);
+  position: relative;
+  overflow: hidden;
+}
+#s00::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(159,167,255,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(159,167,255,.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+.cover-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--g);
+  border: 1px solid rgba(34,221,136,.3);
+  border-radius: 3px;
+  padding: 3px 10px;
+  margin-bottom: 20px;
+  display: inline-block;
+}
+.cover-h1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(40px, 5vw, 68px);
+  font-weight: 700;
+  letter-spacing: -3px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.cover-h1 span { color: var(--p); }
+.cover-ver {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 6px;
+  color: var(--txt3);
+  margin-bottom: 24px;
+}
+.cover-desc {
+  font-size: 14px;
+  color: var(--txt2);
+  line-height: 1.9;
+  max-width: 520px;
+  margin-bottom: 32px;
+}
+.cover-desc strong { color: var(--c); font-weight: 400; }
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 40px;
+}
+.pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  background: rgba(159,167,255,.08);
+  border: 1px solid rgba(159,167,255,.2);
+  color: var(--p);
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+.cover-meta {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 24px;
+}
+.meta-item { }
+.meta-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--txt3);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.meta-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--txt);
+}
+
+/* ─── MONOLITH Mock (2-col section) ─── */
+.two-col-mock {
+  display: grid;
+  grid-template-columns: 460px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.mock-outer {
+  width: 460px;
+  height: 290px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  position: relative;
+  flex-shrink: 0;
+}
+.mock-scaler {
+  transform: scale(0.535);
+  transform-origin: top left;
+  width: 860px;
+  height: 540px;
+  position: absolute;
+  top: 0; left: 0;
+}
+/* MONOLITH inner styles */
+.e-header {
+  height: 44px; background: #131313;
+  border-bottom: 1px solid #202030;
+  display: flex; align-items: center;
+  justify-content: space-between; padding: 0 14px; flex-shrink: 0;
+}
+.e-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; font-weight: 700; color: #5865F2; letter-spacing: 3px;
+}
+.e-header-right { display: flex; align-items: center; gap: 12px; }
+.e-search {
+  display: flex; align-items: center; gap: 8px;
+  background: #0a0a0a; border: 1px solid #2a2a3a;
+  border-radius: 3px; padding: 3px 10px;
+}
+.e-search-k { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #445; }
+.e-more { color: #555; font-size: 16px; }
+.e-body { flex: 1; display: flex; overflow: hidden; }
+.e-lnav {
+  width: 44px; background: #0a0a0a;
+  border-right: 1px solid #1a1a2a;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0; gap: 18px; flex-shrink: 0;
+}
+.e-ni { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #444; font-size: 13px; cursor: pointer; }
+.e-ni.on { color: #bc87fe; border-left: 2px solid #bc87fe; background: rgba(188,135,254,.1); border-radius: 0 4px 4px 0; width: 100%; }
+.e-sb {
+  width: 200px; background: #111118;
+  border-right: 1px solid #1a1a2a;
+  display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+}
+.e-sbh {
+  padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 2px;
+  color: #666688; border-bottom: 1px solid #1a1a2a; text-transform: uppercase;
+}
+.e-fl { flex: 1; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+.e-folder { display: flex; align-items: center; gap: 6px; padding: 5px 10px; cursor: pointer; color: #ccc; letter-spacing: 1px; text-transform: uppercase; }
+.e-fi { display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 26px; cursor: pointer; color: #666688; letter-spacing: 1px; text-transform: uppercase; }
+.e-fi.on { background: #1e1e2e; color: #9fa7ff; border-left: 2px solid #bc87fe; }
+.fi-ic { font-size: 11px; }
+.e-ea { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #0e0e0e; position: relative; }
+.e-tabs { height: 36px; background: #0a0a0a; border-bottom: 1px solid #1a1a2a; display: flex; align-items: flex-end; flex-shrink: 0; }
+.e-tab { display: flex; align-items: center; gap: 5px; padding: 0 12px; height: 32px; font-family: 'JetBrains Mono', monospace; font-size: 10px; cursor: pointer; color: #555; border-top: 2px solid transparent; position: relative; top: 1px; }
+.e-tab.on { background: #0e0e0e; color: #9fa7ff; border-top-color: #bc87fe; border-right: 1px solid #1a1a2a; border-left: 1px solid #1a1a2a; }
+.e-cw { flex: 1; display: flex; overflow: hidden; }
+.e-ln { width: 44px; background: #0e0e0e; padding: 12px 10px 12px 0; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.9; color: #2a2a4a; text-align: right; flex-shrink: 0; border-right: 1px solid #1a1a24; user-select: none; }
+.e-cp { flex: 1; padding: 12px 16px; overflow: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.9; white-space: pre; color: #888; }
+.mc-b { color: #bc87fe; }
+.mc-k { color: #ffa9df; }
+.mc-s { color: #d7b5ff; }
+.mc-v { color: #9fa7ff; }
+.e-fab { position: absolute; bottom: 16px; right: 16px; width: 40px; height: 40px; border-radius: 6px; background: linear-gradient(135deg,#9fa7ff,#5764f1); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; box-shadow: 0 4px 16px rgba(159,167,255,.4); }
+.e-rp { width: 180px; background: #111118; border-left: 1px solid #1a1a2a; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+.e-ph { padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 2px; color: #666688; text-transform: uppercase; border-bottom: 1px solid #1a1a2a; display: flex; justify-content: space-between; align-items: center; }
+.e-wl { padding: 8px; display: flex; flex-direction: column; gap: 5px; }
+.e-wb { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; background: #191924; border: 1px solid #2a2a3a; cursor: pointer; }
+.wk { font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+.wk.p2{color:#9fa7ff;} .wk.s2{color:#bc87fe;} .wk.t2{color:#ffa9df;} .wk.g2{color:#888;}
+.wt { font-family: 'JetBrains Mono', monospace; font-size: 8px; padding: 1px 5px; border-radius: 2px; }
+.wt.p2{background:rgba(159,167,255,.1);color:#9fa7ff;} .wt.s2{background:rgba(188,135,254,.1);color:#bc87fe;} .wt.t2{background:rgba(255,169,223,.1);color:#ffa9df;} .wt.g2{background:rgba(136,136,136,.1);color:#888;}
+.e-rc { padding: 8px 10px; border-top: 1px solid #1a1a2a; margin-top: 4px; }
+.e-rc h4 { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #444; letter-spacing: 2px; margin-bottom: 6px; }
+.e-toks { display: flex; flex-wrap: wrap; gap: 4px; }
+.e-tok { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #d7b5ff; background: #191924; border: 1px solid #2a2a3a; padding: 1px 6px; }
+.e-rnav { width: 44px; background: #0a0a0a; border-left: 1px solid #1a1a2a; display: flex; flex-direction: column; align-items: center; padding: 10px 0; gap: 18px; flex-shrink: 0; }
+.e-ri { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #444; cursor: pointer; }
+.e-ri.on { color: #bc87fe; border-right: 2px solid #bc87fe; background: rgba(188,135,254,.1); width: 100%; border-radius: 4px 0 0 4px; justify-content: center; }
+.e-footer { height: 26px; background: #0a0a0a; border-top: 1px solid #1a1a2a; display: flex; justify-content: space-between; align-items: center; padding: 0 12px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 9px; }
+.e-fl-l { display: flex; gap: 14px; align-items: center; }
+.e-fl-r { display: flex; gap: 14px; align-items: center; color: #444; }
+.e-br { color: #9fa7ff; } .e-sy { color: #444; } .e-nf { color: #bc87fe; }
+/* number badges on mock */
+.nb {
+  position: absolute;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  border: 1.5px solid rgba(255,255,255,.3);
+  z-index: 30; pointer-events: none;
+}
+.nb.pk { background:#ff5f87; color:#fff; box-shadow:0 1px 6px rgba(255,95,135,.6); }
+.nb.bl { background:#9fa7ff; color:#000; box-shadow:0 1px 6px rgba(159,167,255,.5); }
+.nb.cy { background:#00d9ff; color:#000; box-shadow:0 1px 6px rgba(0,217,255,.5); }
+.nb.ye { background:#ffd060; color:#000; box-shadow:0 1px 6px rgba(255,208,96,.5); }
+.nb.gn { background:#22dd88; color:#000; box-shadow:0 1px 6px rgba(34,221,136,.5); }
+.nb.pu { background:#bc87fe; color:#000; box-shadow:0 1px 6px rgba(188,135,254,.5); }
+/* highlight rings */
+.hr {
+  position: absolute; pointer-events: none; z-index: 20;
+  border: 1.5px dashed rgba(255,255,255,.1);
+  border-radius: 4px;
+}
+/* comp table (right col) */
+.comp-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.comp-tbl th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 2px;
+  color: var(--p); background: rgba(159,167,255,.06);
+  padding: 8px 10px; text-align: left;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+}
+.comp-tbl td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.03);
+  vertical-align: middle;
+}
+.comp-tbl tr:last-child td { border-bottom: none; }
+.comp-tbl tr:nth-child(even) td { background: rgba(255,255,255,.015); }
+.cn { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--txt); }
+.cd { font-size: 10px; color: var(--txt2); line-height: 1.5; }
+.bs {
+  display: inline-flex; width: 18px; height: 18px;
+  border-radius: 50%; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;
+}
+.bs.pk{background:#ff5f87;color:#fff;} .bs.bl{background:#9fa7ff;color:#000;}
+.bs.cy{background:#00d9ff;color:#000;} .bs.ye{background:#ffd060;color:#000;}
+.bs.gn{background:#22dd88;color:#000;} .bs.pu{background:#bc87fe;color:#000;}
+
+/* ─── Folder tree ─── */
+.tree-wrap {
+  position: relative;
+}
+.tree-copy-btn {
+  position: absolute;
+  top: 8px; right: 10px;
+  background: rgba(159,167,255,.1);
+  border: 1px solid rgba(159,167,255,.2);
+  border-radius: 4px;
+  color: var(--txt2);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 3px 7px;
+  transition: all .2s;
+  z-index: 5;
+  display: flex; align-items: center; gap: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+}
+.tree-copy-btn:hover { background: rgba(159,167,255,.2); color: var(--p); }
+.tree-copy-btn.copied { background: rgba(34,221,136,.15); border-color: rgba(34,221,136,.4); color: var(--g); }
+.tree {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 2;
+  color: var(--txt2);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 20px 20px;
+  min-height: 360px;
+  overflow-x: auto;
+}
+.tree .dir  { color: var(--p); }
+.tree .fi2  { color: var(--txt2); }
+.tree .fi2.json { color: var(--c); }
+.tree .fi2.ts   { color: var(--s); }
+.tree .fi2.css  { color: #4fc0e8; }
+.tree .fi2.md   { color: var(--g); }
+.tree .cm2  { color: var(--txt3); }
+/* ─── Store JP note ─── */
+.store-jp {
+  font-size: 10px;
+  color: var(--txt2);
+  font-family: 'Noto Sans JP', sans-serif;
+  background: rgba(255,255,255,.03);
+  border-top: 1px solid var(--border);
+  padding: 8px 14px;
+  line-height: 1.8;
+}
+.store-jp em { color: var(--c); font-style: normal; }
+/* ─── Spec note badge ─── */
+.spec-note {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px;
+  background: rgba(255,208,96,.08);
+  border: 1px solid rgba(255,208,96,.25);
+  color: var(--y);
+  border-radius: 3px;
+  padding: 1px 8px;
+  margin-left: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+}
+.spec-tbd {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px;
+  background: rgba(255,95,135,.06);
+  border: 1px solid rgba(255,95,135,.2);
+  color: var(--pk);
+  border-radius: 3px;
+  padding: 1px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+}
+
+/* ─── Zustand store card ─── */
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+  gap: 14px;
+}
+.store-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.store-head {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.store-body {
+  padding: 10px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  line-height: 2;
+  color: var(--txt2);
+}
+.sf { color: var(--c); }
+.sa { color: var(--g); margin-top: 6px; }
+
+/* ─── Summary ─── */
+#s09 {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  background: radial-gradient(ellipse 60% 50% at 50% 60%, #0c1a0e 0%, var(--bg) 100%);
+}
+.sum-quote {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(18px, 2.5vw, 28px);
+  font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 24px;
+  max-width: 560px;
+}
+.sum-quote em { color: var(--g); font-style: normal; }
+.check-list { display: flex; flex-direction: column; gap: 10px; max-width: 500px; margin-bottom: 36px; }
+.ck {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 13px;
+}
+.ck-ic {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(34,221,136,.12); border: 1px solid var(--g);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--g); flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+<div id="root">
+
+<!-- ═══ STEPPER ═══ -->
+<nav id="stepper">
+  <div class="st-brand">
+    <div class="st-app">CODESTUDIO</div>
+    <div class="st-ver">V 1 . 1</div>
+    <div class="st-doc-label">AI EDITOR HANDOFF DOC</div>
+  </div>
+  <div class="st-items" id="st-items">
+    <!-- injected by JS -->
+  </div>
+  <div class="st-key-hint">
+    ↑↓ Arrow : Slide jump<br>
+    Scroll   : Free scroll<br>
+    Click    : Section jump
+  </div>
+  <div class="st-nav">
+    <button id="st-prev">↑ PREV</button>
+    <button id="st-next">↓ NEXT</button>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+<!-- ─── 00 COVER ─── -->
+<section class="section" id="s00" data-title="Overview">
+  <div class="cover-badge">AI EDITOR HANDOFF · 最終仕様書</div>
+  <h1 class="cover-h1"><span>Code</span>Studio</h1>
+  <div class="cover-ver">V E R S I O N &nbsp; 1 . 1</div>
+  <p class="cover-desc">
+    ノベル・スクリプト制作に特化した<br>
+    <strong>PWA型コードエディタ</strong> ＋ <strong>制作支援ツール</strong><br>
+    「書く」ではなく<strong>「構造を構築する」IDE</strong>
+  </p>
+  <div class="pills">
+    <span class="pill">React + Vite</span>
+    <span class="pill">TSX</span>
+    <span class="pill">Monaco Editor</span>
+    <span class="pill">Zustand</span>
+    <span class="pill">File System API</span>
+    <span class="pill">IndexedDB</span>
+    <span class="pill">PWA</span>
+    <span class="pill">Vercel</span>
+  </div>
+  <div class="cover-meta">
+    <div class="meta-item">
+      <div class="meta-label">Platform</div>
+      <div class="meta-val">PWA / Android / PC</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Hosting</div>
+      <div class="meta-val">Vercel</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Status</div>
+      <div class="meta-val" style="color:var(--g)">SPEC FINAL</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 01 TECH STACK ─── -->
+<section class="section" id="s01" data-title="Tech Stack">
+  <div class="sec-eyebrow"><span class="sec-num">01</span><span class="sec-label">TECHNOLOGY</span></div>
+  <h2 class="sec-title">Tech Stack</h2>
+  <p class="sec-sub">実装に使用する技術スタック一覧 <a class="rel" href="#s03">→ Folder Structure</a> <a class="rel" href="#s04">→ State Design</a></p>
+
+  <div class="cards">
+    <div class="card c">
+      <div class="card-icon">⚛</div>
+      <div class="card-title">Frontend</div>
+      <div class="card-val">React + Vite</div>
+      <div class="card-desc">TSX / コンポーネント設計<br>Fast HMR 対応</div>
+    </div>
+    <div class="card p">
+      <div class="card-icon">📝</div>
+      <div class="card-title">Editor</div>
+      <div class="card-val">Monaco Editor</div>
+      <div class="card-desc">VS Code 同等エンジン<br>JSON 優先対応</div>
+    </div>
+    <div class="card s">
+      <div class="card-icon">🗃</div>
+      <div class="card-title">State</div>
+      <div class="card-val">Zustand</div>
+      <div class="card-desc">グローバル状態管理<br>4ストア設計</div>
+    </div>
+    <div class="card pk">
+      <div class="card-icon">💾</div>
+      <div class="card-title">Storage / File</div>
+      <div class="card-val">File System Access API</div>
+      <div class="card-desc">ローカルフォルダ直接編集</div>
+    </div>
+    <div class="card y">
+      <div class="card-icon">🗄</div>
+      <div class="card-title">Storage / Memo</div>
+      <div class="card-val">IndexedDB</div>
+      <div class="card-desc">メモ永続化<br>将来：JSON export</div>
+    </div>
+    <div class="card g">
+      <div class="card-icon">📱</div>
+      <div class="card-title">Platform</div>
+      <div class="card-val">PWA</div>
+      <div class="card-desc">manifest + Service Worker<br>Android / PC / オフライン</div>
+    </div>
+    <div class="card c">
+      <div class="card-icon">🚀</div>
+      <div class="card-title">Hosting</div>
+      <div class="card-val">Vercel</div>
+      <div class="card-desc">CI/CD 自動デプロイ</div>
+    </div>
+  </div>
+
+  <div class="sec-divider"><span>DEPENDENCY NOTE</span></div>
+  <div class="g2">
+    <div>
+      <div class="cb-label">package.json （主要deps）</div>
+      <div class="cb">
+<span class="kw">"dependencies"</span>: {
+  <span class="str">"react"</span>:         <span class="val">"^18"</span>,
+  <span class="str">"@monaco-editor/react"</span>: <span class="val">"latest"</span>,
+  <span class="str">"zustand"</span>:       <span class="val">"^4"</span>,
+  <span class="str">"idb"</span>:           <span class="val">"^8"</span>  <span class="cm">// IndexedDB wrapper</span>
+},
+<span class="kw">"devDependencies"</span>: {
+  <span class="str">"vite"</span>:           <span class="val">"^5"</span>,
+  <span class="str">"vite-plugin-pwa"</span>:<span class="val">"latest"</span>
+}</div>
+    </div>
+    <div>
+      <div class="cb-label">注意点</div>
+      <div class="cb">
+<span class="cm">// Zustand は editor 入力中に ESC で</span>
+<span class="cm">// 抜けるフェーズを別途作成すること</span>
+<span class="cm">// ショートカットは専用モジュールで管理</span>
+
+<span class="cm">// Monaco の型定義</span>
+<span class="str">"@types/monaco-editor"</span>: <span class="val">"latest"</span>
+
+<span class="cm">// File System Access API は Chrome必須</span>
+<span class="cm">// Firefox / Safari は非対応</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 02 LAYOUT & COMPONENTS ─── -->
+<section class="section" id="s02" data-title="Layout & Components">
+  <div class="sec-eyebrow"><span class="sec-num">02</span><span class="sec-label">ARCHITECTURE</span></div>
+  <h2 class="sec-title">Layout & Components</h2>
+  <p class="sec-sub">UIレイアウト構成と全コンポーネント一覧 <a class="rel" href="#s04">→ State Design</a> <a class="rel" href="#s05">→ Core Features</a></p>
+
+  <!-- 2-col: mock left, table right -->
+  <div class="two-col-mock">
+    <!-- Scaled MONOLITH mock with numbers -->
+    <div>
+      <div class="cb-label" style="margin-bottom:8px;">MONOLITH EDITOR — COMPONENT MAP</div>
+      <div class="mock-outer">
+        <div class="mock-scaler">
+          <!-- Full MONOLITH UI 860×540 -->
+          <div style="width:860px;height:540px;display:flex;flex-direction:column;background:#0e0e0e;">
+            <div class="e-header">
+              <div class="e-logo">⌨ MONOLITH</div>
+              <div class="e-header-right">
+                <div class="e-search"><span class="e-search-k">CTRL+F</span><span style="color:#9fa7ff;">⌕</span></div>
+                <span class="e-more">⋮</span>
+              </div>
+            </div>
+            <div class="e-body">
+              <nav class="e-lnav">
+                <div class="e-ni on">◧</div>
+                <div class="e-ni">⌕</div><div class="e-ni">⑂</div><div class="e-ni">⚑</div>
+                <div style="flex:1"></div>
+                <div class="e-ni">⚙</div>
+              </nav>
+              <div class="e-sb">
+                <div class="e-sbh"><span>PROJECT_ROOT</span><span>⊟</span></div>
+                <div class="e-fl">
+                  <div class="e-folder">▼ 📁 SRC</div>
+                  <div class="e-fi"><span class="fi-ic" style="color:#f0db4f">JS</span> MAIN.JS</div>
+                  <div class="e-fi on"><span class="fi-ic" style="color:#9fa7ff">{}</span> NOVEL-SCHEMA.JSON</div>
+                  <div class="e-fi"><span class="fi-ic" style="color:#4fc0e8">CSS</span> STYLE.CSS</div>
+                  <div class="e-folder" style="opacity:.6">▶ 📁 ASSETS</div>
+                  <div class="e-fi" style="padding-left:10px;opacity:.6">📄 PACKAGE.JSON</div>
+                </div>
+              </div>
+              <div class="e-ea">
+                <div class="e-tabs">
+                  <div class="e-tab on">{} novel-schema.json ✕</div>
+                  <div class="e-tab">JS main.js</div>
+                </div>
+                <div class="e-cw">
+                  <div class="e-ln">1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>11<br>12<br>13<br>14<br>15<br>16<br>17<br>18</div>
+                  <div class="e-cp"><span class="mc-b">{</span>
+  <span class="mc-k">"schema"</span>: <span class="mc-s">"monolith.v1"</span>,
+  <span class="mc-k">"content"</span>: <span class="mc-b">[</span>
+    <span class="mc-b">{</span>
+      <span class="mc-k">"storyID"</span>: <span class="mc-s">"arc_092"</span>,
+      <span class="mc-k">"speaker"</span>: <span class="mc-s">"SYSTEM_VOICE"</span>,
+      <span class="mc-k">"event"</span>:  <span class="mc-s">"INIT"</span>,
+      <span class="mc-k">"tags"</span>:  <span class="mc-b">[</span><span class="mc-s">"critical"</span><span class="mc-b">]</span>,
+      <span class="mc-k">"dialogue"</span>:<span class="mc-v">"Systems online."</span>
+    <span class="mc-b">}</span>,
+    <span class="mc-b">{</span>
+      <span class="mc-k">"storyID"</span>: <span class="mc-s">"arc_093"</span>,
+      <span class="mc-k">"speaker"</span>: <span class="mc-s">"NEON_BRUTALIST"</span>,
+      <span class="mc-k">"event"</span>:  <span class="mc-s">"USER_ACCESS"</span>,
+      <span class="mc-k">"tags"</span>:  <span class="mc-b">[</span><span class="mc-s">"interaction"</span><span class="mc-b">]</span>
+    <span class="mc-b">}</span>
+  <span class="mc-b">]</span>
+<span class="mc-b">}</span></div>
+                </div>
+                <div class="e-fab">+</div>
+              </div>
+              <div class="e-rp">
+                <div class="e-ph"><span>WORD LIST</span><span>⚌</span></div>
+                <div class="e-wl">
+                  <div class="e-wb"><span class="wk p2">storyID</span><span class="wt p2">KEY</span></div>
+                  <div class="e-wb"><span class="wk s2">speaker</span><span class="wt s2">ATTR</span></div>
+                  <div class="e-wb"><span class="wk t2">event</span><span class="wt t2">VOID</span></div>
+                  <div class="e-wb"><span class="wk g2">tags</span><span class="wt g2">LIST</span></div>
+                </div>
+                <div class="e-rc">
+                  <h4>RECENT TOKENS</h4>
+                  <div class="e-toks">
+                    <span class="e-tok">arc_092</span><span class="e-tok">SYSTEM</span><span class="e-tok">critical</span>
+                  </div>
+                </div>
+              </div>
+              <nav class="e-rnav">
+                <div class="e-ri on">W</div>
+                <div class="e-ri">F</div><div class="e-ri">?</div><div class="e-ri">M</div>
+              </nav>
+            </div>
+            <div class="e-footer">
+              <div class="e-fl-l"><span class="e-br">⑂ Main Branch</span><span class="e-sy">↺ Synced</span></div>
+              <div class="e-fl-r"><span>Ln 12, Col 42</span><span>UTF-8</span><span>JSON</span><span class="e-nf">🔔 0</span></div>
+            </div>
+          </div>
+          <!-- Highlight rings -->
+          <div class="hr" style="top:0;left:0;width:860px;height:44px;border-color:rgba(255,95,135,.3);"></div>
+          <div class="hr" style="top:8px;right:60px;width:134px;height:28px;border-color:rgba(255,95,135,.4);"></div>
+          <div class="hr" style="top:10px;right:12px;width:26px;height:24px;border-radius:50%;border-color:rgba(255,95,135,.4);"></div>
+          <div class="hr" style="top:44px;left:0;width:44px;height:470px;border-color:rgba(159,167,255,.3);"></div>
+          <div class="hr" style="top:44px;left:44px;width:200px;height:470px;border-color:rgba(159,167,255,.3);"></div>
+          <div class="hr" style="top:44px;left:244px;width:392px;height:36px;border-color:rgba(0,217,255,.3);"></div>
+          <div class="hr" style="top:80px;left:244px;width:44px;height:434px;border-color:rgba(0,217,255,.25);"></div>
+          <div class="hr" style="top:80px;left:288px;width:348px;height:434px;border-color:rgba(0,217,255,.3);"></div>
+          <div class="hr" style="bottom:46px;left:568px;width:40px;height:40px;border-radius:6px;border-color:rgba(255,208,96,.4);"></div>
+          <div class="hr" style="top:44px;right:44px;width:180px;height:470px;border-color:rgba(34,221,136,.3);"></div>
+          <div class="hr" style="top:44px;right:0;width:44px;height:470px;border-color:rgba(34,221,136,.25);"></div>
+          <div class="hr" style="bottom:0;left:0;width:860px;height:26px;border-color:rgba(188,135,254,.3);"></div>
+          <!-- Number badges -->
+          <div class="nb pk" style="top:12px;left:4px;">1</div>
+          <div class="nb pk" style="top:4px;right:56px;">2</div>
+          <div class="nb pk" style="top:4px;right:12px;">3</div>
+          <div class="nb bl" style="top:50px;left:4px;">4</div>
+          <div class="nb bl" style="top:50px;left:48px;">5</div>
+          <div class="nb cy" style="top:50px;left:248px;">6</div>
+          <div class="nb cy" style="top:86px;left:248px;">7</div>
+          <div class="nb cy" style="top:86px;left:292px;">8</div>
+          <div class="nb ye" style="bottom:50px;left:578px;">9</div>
+          <div class="nb gn" style="top:50px;right:48px;">10</div>
+          <div class="nb gn" style="top:50px;right:4px;">11</div>
+          <div class="nb pu" style="bottom:2px;left:4px;">12</div>
+        </div>
+      </div>
+      <!-- Legend -->
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--txt3);">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#ff5f87;border-radius:2px;display:inline-block;"></span>①②③ Header</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#9fa7ff;border-radius:2px;display:inline-block;"></span>④⑤ Left</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#00d9ff;border-radius:2px;display:inline-block;"></span>⑥⑦⑧ Editor</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#ffd060;border-radius:2px;display:inline-block;"></span>⑨ FAB</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#22dd88;border-radius:2px;display:inline-block;"></span>⑩⑪ Right</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#bc87fe;border-radius:2px;display:inline-block;"></span>⑫ Footer</span>
+      </div>
+    </div>
+
+    <!-- Component table -->
+    <div>
+      <div class="cb-label" style="margin-bottom:8px;">COMPONENT REFERENCE</div>
+      <table class="comp-tbl">
+        <tr><th>#</th><th>Component</th><th>役割 / 仕様</th></tr>
+        <tr>
+          <td><span class="bs pk">1</span></td>
+          <td class="cn">HeaderBar</td>
+          <td class="cd">最上部バー。ロゴ・SearchBox・MoreMenu を内包。<br>
+          <span class="spec-note">拡張予定</span> 将来の機能追加時に HeaderBar 内に <strong>モード切り替えボタン</strong>（例：Edit / Preview / Schema）を追加できるスロットを確保。ボタンは <code style="color:var(--p);font-size:9px;">activeMode</code> state で管理。</td>
+        </tr>
+        <tr>
+          <td><span class="bs pk">2</span></td>
+          <td class="cn">SearchBox</td>
+          <td class="cd">Ctrl+F トリガーのファイル内検索UI。<br>
+          <span class="spec-note">仕様追加</span> 検索ヒット後、<strong>十字キー（↑↓）で次の一致単語へジャンプ</strong>。Monaco の <code style="color:var(--p);font-size:9px;">findController.moveToNextMatch() / moveToPreviousMatch()</code> を呼び出す。ヒット数バッジ「3 / 12」表示。</td>
+        </tr>
+        <tr>
+          <td><span class="bs pk">3</span></td>
+          <td class="cn">MoreMenu</td>
+          <td class="cd">右上「⋮」ボタン。クリックで<strong>画面全体にオーバーレイするハンバーガーパネル</strong>を表示（position:fixed / backdrop-blur）。<br>
+          メニュー項目：スキーマ設定 / ルール設定 / ショートカット一覧 / <strong>フォルダ構成 Template</strong>（新規追加）<br>
+          <span class="spec-note">Template追加</span> Template 選択画面でプロジェクト構成テンプレート（Novel / Game / Script等）を選び、フォルダを一括生成。</td>
+        </tr>
+        <tr><td><span class="bs bl">4</span></td><td class="cn">LeftIconNav</td><td class="cd">左端 Activity Bar。アクティブ項目に左ボーダー。モバイル時は非表示（BottomNav に移行）。</td></tr>
+        <tr>
+          <td><span class="bs bl">5</span></td>
+          <td class="cn">FileSidebar</td>
+          <td class="cd">ファイルツリー領域。FileItem / FileFolder を内包。<br>
+          <span class="spec-note">仕様追加 A</span> <strong>境界線（ResizeHandle）</strong>：右端ドラッグで幅を 120px〜400px の範囲で自由調整。幅は <code style="color:var(--p);font-size:9px;">useLayoutStore.sidebarWidth</code> に保存。<br>
+          <span class="spec-note">仕様追加 B</span> <strong>ヘッダー右寄せアイコン</strong>：① 📁 フォルダ新規作成　② 📄 ファイル新規作成　③ 🗂 Template（MoreMenu[3]のフォルダ構成テンプレートを直接起動）</td>
+        </tr>
+        <tr>
+          <td><span class="bs cy">6</span></td>
+          <td class="cn">TabBar</td>
+          <td class="cd">ファイルタブ行。アクティブタブに上ボーダーアクセント。<br>
+          <span class="spec-note">Memo連携</span> <strong>行番号 ↔ MemoEditor の関連づけ仕様</strong>：<br>
+          ① LineNumbers（⑦）の行をクリック → <code style="color:var(--p);font-size:9px;">selectedLine</code> を useMemoStore に書込み<br>
+          ② MemoPanel が自動で「filePath:activeFile.path + line:selectedLine」を表示<br>
+          ③ 同一ファイルの別タブに切り替えると selectedLine はリセット<br>
+          ④ MemoItem クリック時は TabBar が対応ファイルのタブをアクティブに切り替えてから Monaco がスクロール</td>
+        </tr>
+        <tr><td><span class="bs cy">7</span></td><td class="cn">LineNumbers</td><td class="cd">行番号列。クリック→ useMemoStore.setSelectedLine(n) 発火。メモ付き行には左端に <span style="color:var(--s)">●</span> インジケーター表示。</td></tr>
+        <tr><td><span class="bs cy">8</span></td><td class="cn">MonacoEditorWrapper</td><td class="cd">Monaco Editor 本体 wrap。JSON優先・カーソル取得・executeEdits for Word挿入・deltaDecorations for Memoハイライト。</td></tr>
+        <tr>
+          <td><span class="bs ye">9</span></td>
+          <td class="cn">FAB</td>
+          <td class="cd"><span class="spec-tbd">要検討</span> エディタ右下フローティングボタン。現状「新規セグメント追加」予定だが、<strong>コンテキストメニュー方式への変更も検討中</strong>（右クリック or 長押しで操作パレット表示）。実装フェーズで確定する。</td>
+        </tr>
+        <tr><td><span class="bs gn">10</span></td><td class="cn">WordListPanel</td><td class="cd">キーワードボタン。クリック → Monaco executeEdits 挿入 / ドラッグ → DnD 挿入。KEY / ATTR / VOID / LIST カテゴリ色分け。</td></tr>
+        <tr>
+          <td><span class="bs gn">11</span></td>
+          <td class="cn">RightIconNav</td>
+          <td class="cd">W/F/?/M パネル切替。未対応メモ数バッジ M(n)。<br>
+          <span class="spec-note">拡張設計</span> パネルは <strong>プラグイン方式</strong>で追加可能に設計：<br>
+          <code style="color:var(--p);font-size:9px;">PANEL_REGISTRY = [ {id:'word', icon:'W', component:WordListPanel}, ... ]</code><br>
+          新パネルは registry に追加するだけで自動的にアイコンと切替が追加される。</td>
+        </tr>
+        <tr><td><span class="bs pu">12</span></td><td class="cn">FooterStatusBar</td><td class="cd">Branch・Sync・行列番号・エンコード・通知を常時表示。各ステータスはクリックでアクション（行番号→移動ダイアログ等）。</td></tr>
+      </table>
+
+      <div class="sec-divider"><span>COMPONENT TREE</span></div>
+      <div class="cb" style="font-size:10px;">
+<span class="kw">AppLayout</span>
+├── <span class="str">HeaderBar</span> <span class="cm">← ①</span>
+│   ├── SearchBox <span class="cm">← ②</span>
+│   └── MoreMenu  <span class="cm">← ③</span>
+├── <span class="kw">MainLayout</span>
+│   ├── LeftIconNav   <span class="cm">← ④</span>
+│   ├── FileSidebar   <span class="cm">← ⑤</span>
+│   │   ├── FileTree / FileFolder
+│   │   └── FileItem
+│   ├── <span class="str">EditorArea</span>
+│   │   ├── TabBar    <span class="cm">← ⑥</span>
+│   │   ├── LineNumbers <span class="cm">← ⑦</span>
+│   │   ├── MonacoEditorWrapper <span class="cm">← ⑧</span>
+│   │   └── FAB       <span class="cm">← ⑨</span>
+│   ├── RightSidebar
+│   │   ├── WordListPanel <span class="cm">← ⑩</span>
+│   │   ├── FunctionBlockPanel
+│   │   ├── ManualPanel
+│   │   └── MemoPanel
+│   └── RightIconNav  <span class="cm">← ⑪</span>
+└── FooterStatusBar   <span class="cm">← ⑫</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 03 FOLDER STRUCTURE ─── -->
+<section class="section" id="s03" data-title="Folder Structure">
+  <div class="sec-eyebrow"><span class="sec-num">03</span><span class="sec-label">FILE SYSTEM</span></div>
+  <h2 class="sec-title">Folder Structure</h2>
+  <p class="sec-sub">プロジェクトのフォルダ・ファイル構成 <a class="rel" href="#s01">→ Tech Stack</a></p>
+
+  <div class="g2" style="align-items:start;">
+    <div>
+      <div class="cb-label">src/ — メインソース</div>
+      <div class="tree-wrap">
+        <button class="tree-copy-btn" onclick="copyTree(this,'tree-src')">📋 COPY</button>
+        <div class="tree" id="tree-src">
+<span class="dir">src/</span>
+├── <span class="dir">components/</span>
+│   ├── <span class="dir">layout/</span>
+│   │   ├── <span class="fi2 ts">AppLayout.tsx</span>
+│   │   ├── <span class="fi2 ts">MainLayout.tsx</span>
+│   │   └── <span class="fi2 ts">FooterStatusBar.tsx</span>
+│   ├── <span class="dir">header/</span>
+│   │   ├── <span class="fi2 ts">HeaderBar.tsx</span>
+│   │   ├── <span class="fi2 ts">SearchBox.tsx</span>
+│   │   └── <span class="fi2 ts">MoreMenu.tsx</span>
+│   ├── <span class="dir">sidebar/</span>
+│   │   ├── <span class="fi2 ts">LeftIconNav.tsx</span>
+│   │   ├── <span class="fi2 ts">FileSidebar.tsx</span>
+│   │   ├── <span class="fi2 ts">ResizeHandle.tsx</span>  <span class="cm2">← ⑤ 境界線ドラッグ幅調整</span>
+│   │   ├── <span class="fi2 ts">FileTree.tsx</span>
+│   │   └── <span class="fi2 ts">FileItem.tsx</span>
+│   ├── <span class="dir">editor/</span>
+│   │   ├── <span class="fi2 ts">EditorArea.tsx</span>
+│   │   ├── <span class="fi2 ts">TabBar.tsx</span>
+│   │   ├── <span class="fi2 ts">TabItem.tsx</span>
+│   │   ├── <span class="fi2 ts">MonacoEditorWrapper.tsx</span>
+│   │   ├── <span class="fi2 ts">LineNumbers.tsx</span>
+│   │   └── <span class="fi2 ts">FAB.tsx</span>  <span class="cm2">← ⑨ 要検討</span>
+│   └── <span class="dir">right/</span>
+│       ├── <span class="fi2 ts">RightIconNav.tsx</span>
+│       ├── <span class="fi2 ts">RightSidebar.tsx</span>
+│       ├── <span class="fi2 ts">SidebarSwitcher.tsx</span>
+│       ├── <span class="fi2 ts">PANEL_REGISTRY.ts</span>  <span class="cm2">← ⑪ Plugin配列</span>
+│       ├── <span class="fi2 ts">WordListPanel.tsx</span>
+│       ├── <span class="fi2 ts">FunctionBlockPanel.tsx</span>
+│       ├── <span class="fi2 ts">ManualPanel.tsx</span>
+│       └── <span class="dir">memo/</span>
+│           ├── <span class="fi2 ts">MemoPanel.tsx</span>
+│           ├── <span class="fi2 ts">MemoItem.tsx</span>
+│           ├── <span class="fi2 ts">MemoEditor.tsx</span>
+│           └── <span class="fi2 ts">MemoHeader.tsx</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="cb-label">src/ — Store / Data / Config</div>
+      <div class="tree-wrap">
+        <button class="tree-copy-btn" onclick="copyTree(this,'tree-store')">📋 COPY</button>
+        <div class="tree" id="tree-store">
+<span class="dir">src/</span>
+├── <span class="dir">stores/</span>  <span class="cm2">← Zustand 4ストア</span>
+│   ├── <span class="fi2 ts">useLayoutStore.ts</span>   <span class="cm2">← レイアウト・幅・モード</span>
+│   ├── <span class="fi2 ts">useEditorStore.ts</span>   <span class="cm2">← 開いているファイル管理</span>
+│   ├── <span class="fi2 ts">useProjectStore.ts</span>  <span class="cm2">← File System API</span>
+│   └── <span class="fi2 ts">useMemoStore.ts</span>     <span class="cm2">← コメント・行連携</span>
+├── <span class="dir">data/</span>  <span class="cm2">← JSON管理（コード変更不要）</span>
+│   ├── <span class="fi2 json">wordList.json</span>
+│   ├── <span class="fi2 json">functionBlocks.json</span>
+│   ├── <span class="fi2 json">manualRules.json</span>
+│   └── <span class="fi2 json">folderTemplates.json</span>  <span class="cm2">← ③ Template追加</span>
+├── <span class="dir">hooks/</span>
+│   ├── <span class="fi2 ts">useFileSystem.ts</span>
+│   ├── <span class="fi2 ts">useShortcut.ts</span>      <span class="cm2">← ② 十字キー検索ジャンプ含む</span>
+│   ├── <span class="fi2 ts">useResizable.ts</span>     <span class="cm2">← ⑤ 幅ドラッグ制御</span>
+│   └── <span class="fi2 ts">useMemoStorage.ts</span>
+├── <span class="dir">types/</span>
+│   ├── <span class="fi2 ts">editor.types.ts</span>
+│   ├── <span class="fi2 ts">memo.types.ts</span>
+│   └── <span class="fi2 ts">project.types.ts</span>
+├── <span class="fi2 ts">App.tsx</span>
+└── <span class="fi2 ts">main.tsx</span>
+
+<span class="dir">public/</span>
+├── <span class="fi2 json">manifest.json</span>  <span class="cm2">← PWA</span>
+├── <span class="fi2">sw.js</span>            <span class="cm2">← Service Worker</span>
+└── <span class="fi2">icons/</span>           <span class="cm2">← 白黒アイコン</span>
+
+<span class="fi2">vite.config.ts</span>
+<span class="fi2">tsconfig.json</span>
+<span class="fi2 md">README.md</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 04 STATE DESIGN ─── -->
+<section class="section" id="s04" data-title="State Design (Zustand)">
+  <div class="sec-eyebrow"><span class="sec-num">04</span><span class="sec-label">ZUSTAND STORES</span></div>
+  <h2 class="sec-title">State Design</h2>
+  <p class="sec-sub">Zustand 4ストア設計 <a class="rel" href="#s05">→ Core Features</a> <a class="rel" href="#s06">→ Memo Feature</a></p>
+
+  <div class="store-grid">
+    <!-- LayoutStore -->
+    <div class="store-card">
+      <div class="store-head" style="background:rgba(159,167,255,.06);border-bottom:2px solid var(--p);">
+        <span style="color:var(--p)">📐</span>
+        <span style="color:var(--p)">useLayoutStore</span>
+      </div>
+      <div class="store-body">
+<span class="sf">// State</span>
+isMobile:          boolean
+leftSidebarOpen:   boolean
+rightSidebarOpen:  boolean
+activeRightPanel:  <span style="color:var(--t)">'word'|'func'|'manual'|'memo'</span>
+sidebarWidth:      <span style="color:var(--t)">number</span>  <span style="color:var(--txt3)">// ⑤ ResizeHandle</span>
+activeMode:        <span style="color:var(--t)">'edit'|'preview'|'schema'</span>  <span style="color:var(--txt3)">// ① 拡張用</span>
+
+<span class="sa">// Actions</span>
+setMobile(bool)
+toggleLeft()
+toggleRight()
+setActivePanel(panel)
+setSidebarWidth(px)
+setActiveMode(mode)
+      </div>
+      <div class="store-jp">
+        <em>レイアウト全体の見た目・開閉状態を管理。</em><br>
+        モバイル判定、左右サイドバーの開閉、右パネルの表示切替を一元管理する。<br>
+        <code style="font-size:9px;color:var(--p)">sidebarWidth</code> はリサイズハンドルで変更、<code style="font-size:9px;color:var(--p)">activeMode</code> はHeaderBarの切り替えボタンと連動。
+      </div>
+    </div>
+    <!-- EditorStore -->
+    <div class="store-card">
+      <div class="store-head" style="background:rgba(0,217,255,.06);border-bottom:2px solid var(--c);">
+        <span style="color:var(--c)">✏</span>
+        <span style="color:var(--c)">useEditorStore</span>
+      </div>
+      <div class="store-body">
+<span class="sf">// State</span>
+openFiles:      <span style="color:var(--t)">FileEntry[]</span>
+activeFile:     <span style="color:var(--t)">FileEntry | null</span>
+cursorPosition: <span style="color:var(--t)">{ line, column }</span>
+isDirty:        boolean
+searchQuery:    <span style="color:var(--t)">string</span>     <span style="color:var(--txt3)">// ② 検索文字列</span>
+searchIndex:    <span style="color:var(--t)">number</span>     <span style="color:var(--txt3)">// ② 現在のヒット番号</span>
+
+<span class="sa">// Actions</span>
+openFile(entry)
+closeFile(path)
+setActive(path)
+setCursor(line, col)
+setDirty(bool)
+setSearchQuery(q)
+nextMatch()        <span style="color:var(--txt3)">// ② 十字キー→次のヒット</span>
+prevMatch()        <span style="color:var(--txt3)">// ② 十字キー→前のヒット</span>
+      </div>
+      <div class="store-jp">
+        <em>エディタで開いているファイルとカーソル状態を管理。</em><br>
+        タブで複数ファイルを同時に開ける。検索クエリとヒット番号も管理し、十字キーで次のマッチに飛ぶ機能と連動する。<code style="font-size:9px;color:var(--p)">isDirty</code> は未保存の変更フラグ。
+      </div>
+    </div>
+    <!-- ProjectStore -->
+    <div class="store-card">
+      <div class="store-head" style="background:rgba(255,95,135,.06);border-bottom:2px solid var(--pk);">
+        <span style="color:var(--pk)">📁</span>
+        <span style="color:var(--pk)">useProjectStore</span>
+      </div>
+      <div class="store-body">
+<span class="sf">// State</span>
+rootHandle:  <span style="color:var(--t)">FileSystemDirectoryHandle</span>
+              <span style="color:var(--txt3)">// File System Access API</span>
+fileTree:    <span style="color:var(--t)">TreeNode[]</span>
+isLoaded:    boolean
+
+<span class="sa">// Actions</span>
+selectRoot()        <span style="color:var(--txt3)">// showDirectoryPicker</span>
+refreshTree()
+createFile(path)    <span style="color:var(--txt3)">// ⑤ ヘッダーアイコン</span>
+createFolder(path)  <span style="color:var(--txt3)">// ⑤ ヘッダーアイコン</span>
+applyTemplate(tpl)  <span style="color:var(--txt3)">// ③ Template適用</span>
+saveFile(path, content)
+      </div>
+      <div class="store-jp">
+        <em>ローカルフォルダとファイルツリーを管理。</em><br>
+        File System Access API を通じてユーザーのローカルフォルダに直接アクセスする。<code style="font-size:9px;color:var(--p)">createFile / createFolder</code> はFileSidebarヘッダーのアイコンから呼ばれる。<code style="font-size:9px;color:var(--p)">applyTemplate</code> はMoreMenuのTemplate選択から呼ばれ、フォルダ構成を一括生成する。
+      </div>
+    </div>
+    <!-- MemoStore -->
+    <div class="store-card">
+      <div class="store-head" style="background:rgba(34,221,136,.06);border-bottom:2px solid var(--g);">
+        <span style="color:var(--g)">💬</span>
+        <span style="color:var(--g)">useMemoStore</span>
+      </div>
+      <div class="store-body">
+<span class="sf">// State</span>
+memos:        <span style="color:var(--t)">Memo[]</span>
+activeMemo:   <span style="color:var(--t)">Memo | null</span>
+selectedLine: <span style="color:var(--t)">number | null</span>
+filterMode:   <span style="color:var(--t)">'all'|'unresolved'</span>
+
+<span class="sa">// Actions</span>
+addMemo(filePath, line, content)
+editMemo(id, content)
+deleteMemo(id)
+toggleResolved(id)
+jumpToMemo(id)       <span style="color:var(--txt3)">// ⑥ Monaco scroll連携</span>
+setSelectedLine(n)   <span style="color:var(--txt3)">// ⑦ LineNumbers click</span>
+setFilterMode(mode)
+      </div>
+      <div class="store-jp">
+        <em>行ベースのコメント（Memo）を管理。</em><br>
+        行番号クリック → <code style="font-size:9px;color:var(--p)">setSelectedLine</code> → MemoPanel が自動で該当行・ファイルパスを表示。<code style="font-size:9px;color:var(--p)">jumpToMemo</code> は対応ファイルをアクティブにして Monaco をスクロールさせる。<code style="font-size:9px;color:var(--p)">filterMode</code> で未対応のみ/全件 を切替。データは IndexedDB に永続化。
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-divider"><span>TYPE DEFINITIONS</span></div>
+  <div class="g2">
+    <div>
+      <div class="cb-label">types/memo.types.ts</div>
+      <div class="cb">
+<span class="kw">type</span> <span class="str">Memo</span> = {
+  id:         <span class="br">string</span>      <span class="cm">// nanoid</span>
+  filePath:   <span class="br">string</span>
+  line:       <span class="br">number</span>
+  content:    <span class="br">string</span>
+  createdAt:  <span class="br">number</span>      <span class="cm">// timestamp</span>
+  updatedAt:  <span class="br">number</span>
+  resolved:   <span class="br">boolean</span>
+}</div>
+    </div>
+    <div>
+      <div class="cb-label">types/editor.types.ts</div>
+      <div class="cb">
+<span class="kw">type</span> <span class="str">FileEntry</span> = {
+  path:     <span class="br">string</span>
+  name:     <span class="br">string</span>
+  content:  <span class="br">string</span>
+  language: <span class="br">string</span>  <span class="cm">// 'json'|'js'|'css'</span>
+  handle:   <span class="br">FileSystemFileHandle</span>
+}
+
+<span class="kw">type</span> <span class="str">TreeNode</span> = {
+  name:     <span class="br">string</span>
+  path:     <span class="br">string</span>
+  type:     <span class="br">'file'|'folder'</span>
+  children: <span class="br">TreeNode[]</span>
+}</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 05 CORE FEATURES ─── -->
+<section class="section" id="s05" data-title="Core Features">
+  <div class="sec-eyebrow"><span class="sec-num">05</span><span class="sec-label">FEATURES</span></div>
+  <h2 class="sec-title">Core Features</h2>
+  <p class="sec-sub">実装するコア機能の仕様 <a class="rel" href="#s06">→ Memo Detail</a> <a class="rel" href="#s07">→ Mobile</a></p>
+
+  <div class="feat-list">
+    <div class="feat">
+      <span class="feat-tag pk">FILE</span>
+      <div>
+        <h4>ファイル操作 <span style="font-size:11px;color:var(--txt2);">— useProjectStore</span></h4>
+        <p>フォルダ選択（File System Access API / showDirectoryPicker）/ ファイル一覧表示 / 新規ファイル作成 / 新規フォルダ作成 / ファイル読み込み / 上書き保存（FileSystemWritableFileStream）</p>
+      </div>
+    </div>
+    <div class="feat">
+      <span class="feat-tag c">EDITOR</span>
+      <div>
+        <h4>Monaco Editor <span style="font-size:11px;color:var(--txt2);">— useEditorStore</span></h4>
+        <p>JSON 優先シンタックスハイライト / タブ切替（openFiles[] 管理）/ カーソル位置取得（onDidChangeCursorPosition）/ Ctrl+F ファイル内検索（findWidget 連携）/ 行番号クリック検知（onMouseDown → lineNumber）</p>
+      </div>
+    </div>
+    <div class="feat">
+      <span class="feat-tag p">WORD</span>
+      <div>
+        <h4>WordList パネル ★ 最重要 <span style="font-size:11px;color:var(--txt2);">— src/data/wordList.json</span></h4>
+        <p>よく使う単語一覧 / クリック → Monaco executeEdits でカーソル位置に挿入 / ドラッグ → DragEvent → onDrop でドロップ挿入 / KEY / ATTR / VOID / LIST カテゴリ別色分け</p>
+      </div>
+    </div>
+    <div class="feat">
+      <span class="feat-tag s">FUNC</span>
+      <div>
+        <h4>FunctionBlock パネル <span style="font-size:11px;color:var(--txt2);">— src/data/functionBlocks.json</span></h4>
+        <p>コードテンプレート一覧 / 各ブロック右上にコピーアイコン / クリックで navigator.clipboard.writeText / JSON スニペット対応</p>
+      </div>
+    </div>
+    <div class="feat">
+      <span class="feat-tag y">DOC</span>
+      <div>
+        <h4>Manual パネル <span style="font-size:11px;color:var(--txt2);">— src/data/manualRules.json</span></h4>
+        <p>JSON ルール表示 / スキーマ参照 / インライン閲覧。MarkDown または structured JSON で定義</p>
+      </div>
+    </div>
+    <div class="feat" style="border-color:rgba(34,221,136,.3);">
+      <span class="feat-tag g">MEMO ★</span>
+      <div>
+        <h4>Memo パネル — 新規追加 <a class="rel" href="#s06">詳細 →</a></h4>
+        <p>行ベースコメント管理 / 行クリック → MemoPanel 開く / Ctrl+Enter 保存 / IndexedDB 永続化 / ジャンプ機能 / 完了チェック / 行番号横 ● インジケーター / 未対応数バッジ M(n)</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-divider"><span>NAVIGATION MAP</span></div>
+  <div class="g2">
+    <table class="tbl">
+      <tr><th colspan="2">左アイコン (LeftIconNav)</th></tr>
+      <tr><td>📁</td><td>FileSidebar — ファイルツリー</td></tr>
+      <tr><td>🔍</td><td>SearchPanel — ファイル内検索</td></tr>
+      <tr><td>🧩</td><td>SnippetPanel — スニペット</td></tr>
+      <tr><td>⚙</td><td>SettingsPanel — 設定</td></tr>
+    </table>
+    <table class="tbl">
+      <tr><th colspan="2">右アイコン (RightIconNav)</th></tr>
+      <tr><td class="em">W</td><td>WordListPanel — 単語挿入</td></tr>
+      <tr><td class="em">F</td><td>FunctionBlockPanel — テンプレ</td></tr>
+      <tr><td class="em">?</td><td>ManualPanel — ルール参照</td></tr>
+      <tr><td class="em">M</td><td>MemoPanel — コメント管理 ★</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ─── 06 MEMO FEATURE ─── -->
+<section class="section" id="s06" data-title="Memo Feature">
+  <div class="sec-eyebrow"><span class="sec-num">06</span><span class="sec-label">REVIEW SYSTEM</span></div>
+  <h2 class="sec-title">Memo Feature 詳細</h2>
+  <p class="sec-sub">行ベースコメント管理 / Review System <a class="rel" href="#s04">→ MemoStore</a></p>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-box">
+        <div class="flow-icon">🖱</div>
+        <strong>行番号クリック</strong>
+        <span>onMouseDown</span>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box">
+        <div class="flow-icon">📋</div>
+        <strong>MemoPanel 開く</strong>
+        <span>RightSidebar表示</span>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box">
+        <div class="flow-icon">✏</div>
+        <strong>即入力状態</strong>
+        <span>パス自動表示</span>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box">
+        <div class="flow-icon">💾</div>
+        <strong>Ctrl+Enter保存</strong>
+        <span>IndexedDB</span>
+      </div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-box">
+        <div class="flow-icon">●</div>
+        <strong>行インジケーター</strong>
+        <span>行番号横に表示</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-top:20px;">
+    <div>
+      <div class="sec-divider"><span>MEMO PANEL UI</span></div>
+      <div class="cb">
+┌ <span class="kw">MemoPanel</span>
+├ <span class="str">MemoHeader</span>
+│   /src/data/novel-schema.json:12
+├ <span class="str">MemoEditor</span>  <span class="cm">← 即入力状態</span>
+│   「この分岐、後で整理」
+├ Save  <span class="cm">// Ctrl+Enter</span>
+└ <span class="str">MemoList</span>
+   ├ MemoItem
+   │  <span class="kw">[ ]</span> /src/...:12
+   │  コメント本文
+   │  <span class="val">編集</span> / <span class="br">削除</span>
+   └ MemoItem
+      <span class="kw">[x]</span> /src/...:8  <span class="cm">← resolved</span>
+      </div>
+
+      <div class="sec-divider"><span>EDITOR INTEGRATION</span></div>
+      <div class="cb">
+<span class="cm">// 行クリック検知</span>
+<span class="kw">Monaco</span>.onMouseDown(e => {
+  <span class="str">lineNumber</span> = e.target.position.lineNumber
+  setSelectedLine(lineNumber)
+  setActivePanel(<span class="val">'memo'</span>)
+})
+
+<span class="cm">// ジャンプ</span>
+<span class="kw">Monaco</span>.revealLineInCenter(memo.line)
+<span class="kw">Monaco</span>.setPosition({line: memo.line, col: 1})
+
+<span class="cm">// ハイライト</span>
+<span class="kw">Monaco</span>.deltaDecorations([], [{
+  range: {startLine: memo.line ...},
+  options: { className: <span class="val">'memo-hl'</span> }
+}])</div>
+    </div>
+    <div>
+      <div class="sec-divider"><span>UX 強化ポイント</span></div>
+      <div class="feat-list">
+        <div class="feat">
+          <span class="feat-tag g">①</span>
+          <div><h4>即入力状態</h4><p>行クリック直後に MemoEditor がフォーカス状態で開く</p></div>
+        </div>
+        <div class="feat">
+          <span class="feat-tag g">②</span>
+          <div><h4>パス自動表示</h4><p>/src/data/file.json:12 を手入力不要で自動表示</p></div>
+        </div>
+        <div class="feat">
+          <span class="feat-tag g">③</span>
+          <div><h4>未対応バッジ</h4><p>RightIconNav の M に M(3) のようにバッジ表示</p></div>
+        </div>
+        <div class="feat">
+          <span class="feat-tag g">④</span>
+          <div><h4>フィルタ</h4><p>未対応のみ表示 / 完了含む全表示 の切替</p></div>
+        </div>
+      </div>
+
+      <div class="sec-divider"><span>STORAGE</span></div>
+      <table class="tbl">
+        <tr><th>方式</th><th>詳細</th><th>優先度</th></tr>
+        <tr><td>IndexedDB</td><td>idb ライブラリ使用。永続化。</td><td class="em">推奨</td></tr>
+        <tr><td>localStorage</td><td>簡易実装。5MB制限あり。</td><td style="color:var(--txt3)">予備</td></tr>
+        <tr><td>JSON export</td><td>将来：プロジェクト共有用</td><td style="color:var(--txt3)">将来</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 07 MOBILE / PWA ─── -->
+<section class="section" id="s07" data-title="Mobile & PWA">
+  <div class="sec-eyebrow"><span class="sec-num">07</span><span class="sec-label">MOBILE SPEC</span></div>
+  <h2 class="sec-title">Mobile & PWA</h2>
+  <p class="sec-sub">モバイルレイアウトとPWA仕様 <a class="rel" href="#s08">→ DONE Criteria</a></p>
+
+  <div class="g2">
+    <div>
+      <div class="sec-divider"><span>MOBILE LAYOUT</span></div>
+      <div class="cb">
+<span class="cm">// Desktop</span>
+<span class="kw">LeftIconNav</span>(44px)
++ <span class="kw">FileSidebar</span>(200px)
++ <span class="kw">EditorArea</span>(flex-1)
++ <span class="kw">RightSidebar</span>(180px)
++ <span class="kw">RightIconNav</span>(44px)
+
+<span class="cm">// Mobile（isMobile === true）</span>
+<span class="kw">Header</span>
+<span class="kw">EditorArea</span>（全画面 100vw）
+<span class="kw">BottomNav</span>
+  [📁 Files][✏ Edit][📚 Words][⚙ Settings]
+
+<span class="cm">// サイドバー挙動</span>
+左 FileSidebar : translateX スライド
+右 RightSidebar: フルスクリーン overlay</div>
+
+      <div class="sec-divider"><span>BREAKPOINT</span></div>
+      <div class="cb">
+<span class="cm">// useLayoutStore.ts</span>
+<span class="kw">useEffect</span>(() => {
+  const check = () =>
+    setMobile(window.innerWidth < <span class="val">768</span>)
+  check()
+  window.addEventListener(<span class="str">'resize'</span>, check)
+  return () => window.removeEventListener(...)
+}, [])</div>
+    </div>
+    <div>
+      <div class="sec-divider"><span>PWA SPEC</span></div>
+      <div class="feat-list">
+        <div class="feat">
+          <span class="feat-tag p">PWA</span>
+          <div><h4>manifest.json</h4><p>name / short_name / icons（白黒、192×192, 512×512）/ display: standalone / theme_color / start_url</p></div>
+        </div>
+        <div class="feat">
+          <span class="feat-tag c">SW</span>
+          <div><h4>Service Worker</h4><p>vite-plugin-pwa で自動生成。Workbox キャッシュ戦略。オフライン起動対応。</p></div>
+        </div>
+        <div class="feat">
+          <span class="feat-tag g">INSTALL</span>
+          <div><h4>ホーム画面追加</h4><p>Android Chrome：「ホーム画面に追加」プロンプト対応。PWA インストール後はスタンドアローン起動。</p></div>
+        </div>
+      </div>
+
+      <div class="sec-divider"><span>VITE PWA CONFIG</span></div>
+      <div class="cb" style="font-size:10px;">
+<span class="cm">// vite.config.ts</span>
+<span class="kw">VitePWA</span>({
+  registerType: <span class="str">'autoUpdate'</span>,
+  workbox: {
+    globPatterns: [<span class="str">'**/*.{js,css,html,ico}'</span>]
+  },
+  manifest: {
+    name: <span class="str">'CodeStudio'</span>,
+    short_name: <span class="str">'CodeStudio'</span>,
+    display: <span class="str">'standalone'</span>,
+    icons: [{ src: <span class="str">'icon-192.png'</span>, sizes: <span class="str">'192x192'</span> }]
+  }
+})</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 08 DONE CRITERIA ─── -->
+<section class="section" id="s08" data-title="DONE Criteria">
+  <div class="sec-eyebrow"><span class="sec-num">08</span><span class="sec-label">ACCEPTANCE CRITERIA</span></div>
+  <h2 class="sec-title">DONE 定義 / テスト設計</h2>
+  <p class="sec-sub">受入条件と検証チェックリスト <a class="rel" href="#s09">→ Summary</a></p>
+
+  <div class="done-grid">
+    <div class="done-card">
+      <div class="done-title"><span class="done-badge">DONE01</span> テスト検証</div>
+      <ul class="done-list-items">
+        <li>フォルダ選択ダイアログ表示</li>
+        <li>ファイルツリー正常表示</li>
+        <li>ファイル読み込み・表示</li>
+        <li>上書き保存・ファイル反映確認</li>
+        <li>WordList クリック挿入 OK</li>
+        <li>WordList ドラッグ挿入 OK</li>
+        <li>FunctionBlock コピー OK</li>
+        <li>Memo 作成 / 編集 / 削除 OK</li>
+        <li>Memo 行ジャンプ OK</li>
+        <li>Memo 完了チェック OK</li>
+        <li>Ctrl+F 検索動作 OK</li>
+        <li>タブ切替 OK</li>
+      </ul>
+    </div>
+    <div class="done-card">
+      <div class="done-title"><span class="done-badge">DONE02</span> PWA 化</div>
+      <ul class="done-list-items">
+        <li>manifest.json 設定完了</li>
+        <li>アイコン（192 / 512）反映</li>
+        <li>Service Worker 登録確認</li>
+        <li>Lighthouse PWA スコア確認</li>
+        <li>オフライン起動確認</li>
+        <li>ホーム画面追加プロンプト表示</li>
+      </ul>
+    </div>
+    <div class="done-card">
+      <div class="done-title"><span class="done-badge">DONE03</span> Vercel デプロイ</div>
+      <ul class="done-list-items">
+        <li>GitHub リポジトリ連携</li>
+        <li>Vercel プロジェクト作成</li>
+        <li>自動デプロイ成功</li>
+        <li>本番 URL で動作確認</li>
+        <li>HTTPS 証明書確認</li>
+      </ul>
+    </div>
+    <div class="done-card">
+      <div class="done-title"><span class="done-badge">DONE04</span> 実機テスト</div>
+      <ul class="done-list-items">
+        <li>PC Chrome — 全機能 OK</li>
+        <li>PC Chrome — File API 動作</li>
+        <li>Android PWA インストール OK</li>
+        <li>Android — スタンドアローン起動</li>
+        <li>Android — BottomNav 操作 OK</li>
+        <li>Android — スライドサイドバー OK</li>
+        <li>Android — Memo 機能 OK</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sec-divider"><span>TEST MATRIX</span></div>
+  <table class="tbl">
+    <tr>
+      <th>テスト項目</th>
+      <th>対象コンポーネント</th>
+      <th>確認方法</th>
+      <th>Pass条件</th>
+    </tr>
+    <tr>
+      <td>ファイル読込</td>
+      <td class="em">useProjectStore</td>
+      <td>フォルダ選択→ファイルクリック</td>
+      <td>エディタにコード表示</td>
+    </tr>
+    <tr>
+      <td>上書き保存</td>
+      <td class="em">useProjectStore.saveFile</td>
+      <td>編集→Ctrl+S→外部エディタ確認</td>
+      <td>変更がファイルに反映</td>
+    </tr>
+    <tr>
+      <td>Word挿入</td>
+      <td class="em">WordListPanel</td>
+      <td>ボタンクリック</td>
+      <td>カーソル位置にキーワード挿入</td>
+    </tr>
+    <tr>
+      <td>Drag挿入</td>
+      <td class="em">WordListPanel + MonacoEditorWrapper</td>
+      <td>ドラッグ→エディタにドロップ</td>
+      <td>ドロップ位置にキーワード挿入</td>
+    </tr>
+    <tr>
+      <td>Memo作成</td>
+      <td class="em">useMemoStore + MemoPanel</td>
+      <td>行クリック→入力→Ctrl+Enter</td>
+      <td>行番号横に●・MemoListに表示</td>
+    </tr>
+    <tr>
+      <td>Memoジャンプ</td>
+      <td class="em">MemoItem + Monaco</td>
+      <td>MemoItemクリック</td>
+      <td>エディタが対象行にスクロール</td>
+    </tr>
+    <tr>
+      <td>IndexedDB永続化</td>
+      <td class="em">useMemoStorage</td>
+      <td>Memo作成→リロード</td>
+      <td>リロード後もMemoが残存</td>
+    </tr>
+    <tr>
+      <td>オフライン起動</td>
+      <td class="em">Service Worker</td>
+      <td>DevTools→Network:Offline</td>
+      <td>アプリが起動・表示される</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ─── 09 SUMMARY ─── -->
+<section class="section" id="s09" data-title="Summary">
+  <div class="cover-badge" style="border-color:rgba(34,221,136,.4);color:var(--g);">SPEC COMPLETE — AI EDITOR READY</div>
+  <div class="sum-quote">
+    「書く」ではなく<br><em>「構造を構築する」</em>IDE
+  </div>
+  <p class="cover-desc" style="max-width:480px;margin-bottom:28px;">
+    CodeStudio V1.1 は<br>
+    ノベル・スクリプト制作のための<br>
+    エディタ ＋ 支援ツール ＋ レビュー機能<br>
+    が統合された制作管理ツールです
+  </p>
+  <div class="check-list">
+    <div class="ck"><span class="ck-ic">✓</span> VSCode ライクで拡張性あり</div>
+    <div class="ck"><span class="ck-ic">✓</span> ノベル制作に最適化された WordList</div>
+    <div class="ck"><span class="ck-ic">✓</span> PWA でも破綻しないレスポンシブ設計</div>
+    <div class="ck"><span class="ck-ic">✓</span> Zustand 4ストアによる明確な状態分離</div>
+    <div class="ck"><span class="ck-ic">✓</span> Memo 機能でレビュー・管理まで完結</div>
+    <div class="ck"><span class="ck-ic">✓</span> IndexedDB による永続化</div>
+    <div class="ck"><span class="ck-ic">✓</span> File System Access API でローカル直接編集</div>
+    <div class="ck"><span class="ck-ic">✓</span> Vercel + PWA で即デプロイ可能</div>
+  </div>
+  <div class="pills">
+    <span class="pill">React + Vite</span>
+    <span class="pill">Monaco Editor</span>
+    <span class="pill">Zustand ×4</span>
+    <span class="pill">File System API</span>
+    <span class="pill">IndexedDB</span>
+    <span class="pill">PWA</span>
+    <span class="pill">Vercel</span>
+  </div>
+</section>
+
+</div><!-- /main -->
+</div><!-- /root -->
+
+<script>
+/* ─── Copy tree text ─── */
+function copyTree(btn, id) {
+  const el = document.getElementById(id);
+  const text = el ? el.innerText : '';
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ COPIED';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 COPY'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+/* ─── Section data ─── */
+const sections = Array.from(document.querySelectorAll('.section'));
+const main = document.getElementById('main');
+const stItems = document.getElementById('st-items');
+let current = 0;
+
+/* ─── Build stepper ─── */
+sections.forEach((sec, i) => {
+  const title = sec.getAttribute('data-title') || sec.id;
+  const num = String(i).padStart(2,'0');
+  const item = document.createElement('div');
+  item.className = 'st-item' + (i===0?' active':'');
+  item.innerHTML = `<span class="st-num">${num}</span><span class="st-name">${title}</span><div class="st-line"></div>`;
+  item.addEventListener('click', () => {
+    sections[i].scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+  stItems.appendChild(item);
+});
+
+/* ─── Get current section from scroll ─── */
+function updateActive() {
+  const scrollTop = main.scrollTop;
+  let found = 0;
+  sections.forEach((sec, i) => {
+    if (sec.offsetTop - 80 <= scrollTop) found = i;
+  });
+  if (found !== current) {
+    current = found;
+    document.querySelectorAll('.st-item').forEach((el, i) => {
+      el.classList.toggle('active', i === current);
+    });
+  }
+}
+
+main.addEventListener('scroll', updateActive, { passive: true });
+
+/* ─── Arrow key → snap to section ─── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (current < sections.length - 1) {
+      sections[current + 1].scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (current > 0) {
+      sections[current - 1].scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+  }
+});
+
+/* ─── Nav buttons ─── */
+document.getElementById('st-prev').addEventListener('click', () => {
+  if (current > 0) sections[current - 1].scrollIntoView({ behavior:'smooth', block:'start' });
+});
+document.getElementById('st-next').addEventListener('click', () => {
+  if (current < sections.length - 1) sections[current + 1].scrollIntoView({ behavior:'smooth', block:'start' });
+});
+
+/* ─── Relation links ─── */
+document.querySelectorAll('.rel').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const href = a.getAttribute('href');
+    const target = document.querySelector(href);
+    if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+});
+</script>
+</body>
+</html>

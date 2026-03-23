@@ -1,0 +1,34 @@
+.panel { display: flex; flex-direction: column; height: 100%; }
+.header {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 2px; color: var(--txt2); text-transform: uppercase;
+  flex-shrink: 0;
+}
+.list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.block {
+  background: var(--bg4); border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+}
+.blockHeader {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.blockLabel { font-family: var(--font-mono); font-size: 10px; color: var(--txt); flex: 1; }
+.blockCat {
+  font-family: var(--font-mono); font-size: 8px;
+  color: var(--s); background: rgba(188,135,254,.1);
+  border: 1px solid rgba(188,135,254,.2); border-radius: 2px; padding: 1px 5px;
+}
+.copyBtn {
+  background: none; border: none; color: var(--txt2); font-size: 14px;
+  cursor: pointer; padding: 2px 5px; border-radius: 3px;
+  transition: all .15s;
+}
+.copyBtn:hover { color: var(--p); background: rgba(159,167,255,.1); }
+.copyBtnDone { color: var(--g) !important; }
+.code {
+  font-family: var(--font-mono); font-size: 10px; line-height: 1.7;
+  color: var(--txt2); padding: 8px 10px;
+  overflow-x: auto; white-space: pre;
+}

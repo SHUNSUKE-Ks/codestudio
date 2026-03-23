@@ -1,0 +1,21 @@
+.footer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--footer-h);
+  background: var(--bg3);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 12px;
+  font-family: var(--font-mono); font-size: 9px;
+  z-index: 200; flex-shrink: 0;
+}
+.left  { display: flex; align-items: center; gap: 14px; }
+.right { display: flex; align-items: center; gap: 14px; color: var(--txt3); }
+.right span { cursor: default; transition: color .15s; }
+.right span:hover { color: var(--txt2); }
+.branch { color: var(--p); display: flex; align-items: center; gap: 4px; }
+.saveHint {
+  background: none; border: none; color: var(--y);
+  font-family: var(--font-mono); font-size: 9px; cursor: pointer;
+  transition: color .15s;
+}
+.saveHint:hover { color: var(--g); }

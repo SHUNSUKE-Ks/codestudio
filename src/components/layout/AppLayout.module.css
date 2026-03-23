@@ -1,0 +1,37 @@
+/* Desktop */
+.app {
+  display: flex; flex-direction: column;
+  width: 100vw; height: 100vh; overflow: hidden;
+}
+.body {
+  display: flex; flex: 1; overflow: hidden;
+  margin-top: var(--header-h);
+  margin-bottom: var(--footer-h);
+}
+
+/* Mobile */
+.mobileApp {
+  display: flex; flex-direction: column;
+  width: 100vw; height: 100vh; overflow: hidden;
+}
+.mobileBody {
+  display: flex; flex: 1; overflow: hidden;
+  margin-top: var(--header-h);
+  margin-bottom: 56px;
+}
+
+/* BottomNav */
+.bottomNav {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 56px;
+  background: var(--bg3); border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-around;
+  z-index: 200;
+}
+.bottomNavBtn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: none; border: none; cursor: pointer; padding: 6px 12px;
+  transition: color .15s;
+}
+.bottomNavBtn:hover { color: var(--p); }
+.bottomNavIcon { font-size: 18px; font-family: var(--font-mono); }
+.bottomNavLabel { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; color: var(--txt3); }

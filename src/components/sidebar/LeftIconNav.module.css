@@ -1,0 +1,21 @@
+.nav {
+  width: var(--lnav-w); min-width: var(--lnav-w);
+  background: #0a0a0a;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0; gap: 6px;
+}
+.icon {
+  width: 100%; height: 36px; display: flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--txt3);
+  font-size: 15px; cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: color .15s, background .15s;
+}
+.icon:hover { color: var(--txt2); background: rgba(255,255,255,.04); }
+.iconActive {
+  color: var(--s) !important;
+  border-left-color: var(--s) !important;
+  background: rgba(188,135,254,.08) !important;
+}
+.spacer { flex: 1; }

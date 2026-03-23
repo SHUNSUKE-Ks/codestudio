@@ -1,0 +1,14 @@
+[
+  { "id": "storyID",  "label": "storyID",  "category": "KEY",  "color": "p" },
+  { "id": "speaker",  "label": "speaker",  "category": "ATTR", "color": "s" },
+  { "id": "event",    "label": "event",    "category": "VOID", "color": "t" },
+  { "id": "tags",     "label": "tags",     "category": "LIST", "color": "g" },
+  { "id": "dialogue", "label": "dialogue", "category": "ATTR", "color": "s" },
+  { "id": "bgm",      "label": "bgm",      "category": "KEY",  "color": "p" },
+  { "id": "bg",       "label": "bg",       "category": "KEY",  "color": "p" },
+  { "id": "character","label": "character","category": "ATTR", "color": "s" },
+  { "id": "effect",   "label": "effect",   "category": "VOID", "color": "t" },
+  { "id": "choice",   "label": "choice",   "category": "LIST", "color": "g" },
+  { "id": "condition","label": "condition","category": "ATTR", "color": "s" },
+  { "id": "next",     "label": "next",     "category": "KEY",  "color": "p" }
+]

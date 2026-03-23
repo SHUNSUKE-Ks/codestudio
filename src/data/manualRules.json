@@ -1,0 +1,22 @@
+[
+  {
+    "id": "schema",
+    "title": "Schema ルート",
+    "body": "{ \"schema\": \"codestudio.v1\", \"title\": \"...\", \"content\": [] }\n\nschema: バージョン識別子（必須）\ntitle: プロジェクトタイトル\ncontent: シーン配列"
+  },
+  {
+    "id": "scene",
+    "title": "Scene フィールド",
+    "body": "storyID: シーン一意ID（例: arc_001）\nspeaker: 話者名\ndialogue: セリフ文字列\nbg: 背景ファイルパス\nbgm: BGMファイルパス\ntags: タグ配列"
+  },
+  {
+    "id": "choice",
+    "title": "Choice フィールド",
+    "body": "type: \"choice\" で選択肢モードに切り替え\nchoices: [ { label: \"テキスト\", next: \"arc_xxx\" } ]\nnext: 遷移先storyID"
+  },
+  {
+    "id": "event",
+    "title": "Event フィールド",
+    "body": "event: イベント名（例: FADE_IN, SHAKE）\neffect: エフェクト識別子\ncondition: 発火条件式"
+  }
+]
