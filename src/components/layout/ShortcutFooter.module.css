@@ -1,0 +1,247 @@
+.footerOverlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 -12px 40px rgba(45, 52, 53, 0.08);
+  max-height: 80vh;
+}
+
+.navBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 12px 24px;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #ebeeef;
+}
+
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.navTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1A1A1A;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tabBtn {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.tabBtnActive {
+  color: #1A1A1A;
+  border-bottom: 2px solid #5f5e5e;
+  border-radius: 0;
+  padding-bottom: 4px;
+}
+
+.tabBtnInactive {
+  color: #5f5e5e;
+}
+
+.tabBtnInactive:hover {
+  background-color: #dde4e5;
+}
+
+.addBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.addBtn:hover {
+  background-color: #dde4e5;
+}
+
+.addBtn:active {
+  transform: scale(0.95);
+}
+
+.addIconText {
+  color: #5f5e5e;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'Space Grotesk', sans-serif;
+  line-height: 1;
+}
+
+.addInput {
+  width: 96px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border: 1px solid rgba(173, 179, 180, 0.4);
+  border-radius: 4px;
+  outline: none;
+}
+
+.addInput:focus {
+  border-color: #5f5e5e;
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px; /* Narrower gap */
+  padding: 4px 8px; /* Narrower padding */
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid rgba(173, 179, 180, 0.3); /* Subtle border */
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.actionBtn:hover {
+  background-color: #dde4e5;
+  border-color: rgba(173, 179, 180, 0.6);
+}
+
+.actionIcon {
+  color: #5a6061;
+  font-size: 16px; /* slightly smaller icon */
+}
+
+.actionLabel {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: #5a6061;
+}
+
+.keyboardArea {
+  background-color: #f2f4f4;
+  border-top: 1px solid rgba(173, 179, 180, 0.15);
+  padding-bottom: 32px;
+  padding-top: 16px;
+}
+
+.scrollContainer {
+  width: 100%;
+  padding-left: 24px;
+  padding-right: 24px;
+  overflow-x: auto;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.gridContainer {
+  min-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.keyboardRow {
+  display: flex;
+  gap: 16px;
+}
+
+.keyCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.keyIndicator {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #dde4e5;
+  border-radius: 4px;
+  color: #2d3435;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.inputWrapper {
+  position: relative;
+}
+
+.keyInput {
+  width: 192px; /* w-48 */
+  background-color: #ffffff;
+  border: 1px solid rgba(173, 179, 180, 0.2);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-family: 'Inter', sans-serif;
+  color: #2d3435;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.keyInput:focus {
+  border-color: rgba(173, 179, 180, 0.4);
+  background-color: #f9f9f9;
+}
+
+.editIconContainer {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  background: transparent;
+  border: none;
+}
+
+.keyCell:hover .editIconContainer {
+  opacity: 1;
+}
+
+.editIcon {
+  color: #5a6061;
+  font-size: 16px; /* slightly bigger for edit_note */
+}

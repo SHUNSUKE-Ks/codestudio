@@ -5,6 +5,7 @@ import { FileSidebar }     from '../sidebar/FileSidebar'
 import { EditorArea }      from '../editor/EditorArea'
 import { RightSidebar, RightIconNav } from '../right/RightSidebar'
 import { FooterStatusBar } from './FooterStatusBar'
+import { ShortcutFooter }  from './ShortcutFooter'
 import { useLayoutStore }  from '../../stores/useLayoutStore'
 import { useMemoStore }    from '../../stores/useMemoStore'
 import { useShortcut }     from '../../hooks/useShortcut'
@@ -39,6 +40,7 @@ export const AppLayout: React.FC = () => {
         <RightIconNav />
       </div>
       <FooterStatusBar />
+      <ShortcutFooter />
     </div>
   )
 }
@@ -76,6 +78,7 @@ const MobileLayout: React.FC = () => {
           </button>
         ))}
       </nav>
+      <ShortcutFooter />
     </div>
   )
 }

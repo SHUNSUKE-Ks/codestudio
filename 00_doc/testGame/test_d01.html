@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DungeonKeeper — Playable Demo v0.1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ── UI STYLES (Based on your Layout Anatomy) ── */
+        :root {
+            --bg0: #0e0c0a;
+            --bg1: #161310;
+            --bg2: #1e1a16;
+            --bg3: #26211b;
+            --bg4: #302a22;
+            --bd: #3a3228;
+            --bdh: #4d4338;
+            --tp: #e8e0d0;
+            --ts: #9a8e7e;
+            --tt: #5c5248;
+            --amber: #c8861a;
+            --amberH: #e09a20;
+            --amberD: #7a5010;
+            --amberBg: #1e1508;
+            --blue: #4a7fa0;
+            --blueH: #6a9fc0;
+            --blueBg: #0a1520;
+            --red: #8a3a3a;
+            --redH: #b05050;
+            --redBg: #1a0808;
+            --rL: 9px;
+            --mono: 'IBM Plex Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: var(--bg0);
+            color: var(--tp);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        /* TOPBAR */
+        .top {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            height: 44px;
+            background: var(--bg1);
+            border-bottom: 1px solid var(--bd);
+            justify-content: space-between
+        }
+
+        .title-logo {
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            color: var(--amber);
+            letter-spacing: .1em
+        }
+
+        .res-group {
+            display: flex;
+            gap: 12px
+        }
+
+        .res-item {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--ts);
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        /* MAIN LAYOUT */
+        .main-game {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            grid-template-rows: 1fr 100px;
+            gap: 4px;
+            padding: 4px;
+            background: var(--bg0)
+        }
+
+        /* MAP AREA */
+        #map-container {
+            background: #050505;
+            border: 1px solid var(--bd);
+            position: relative;
+            overflow: auto;
+            display: grid;
+            grid-template-columns: repeat(20, 32px);
+            grid-template-rows: repeat(15, 32px);
+            gap: 1px;
+            padding: 10px;
+            align-content: start;
+            justify-content: start
+        }
+
+        .tile {
+            width: 32px;
+            height: 32px;
+            border-radius: 2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: filter 0.1s
+        }
+
+        .tile:hover {
+            filter: brightness(1.5);
+            outline: 1px solid var(--amber)
+        }
+
+        .t-rock {
+            background: #1a1510;
+            color: #3a3228
+        }
+
+        .t-floor {
+            background: #0e1a0e;
+            border: 1px solid #1a2a1a
+        }
+
+        .t-heart {
+            background: #2a0a0a;
+            border: 1px solid #6a1010;
+            box-shadow: inset 0 0 10px #ff000044;
+            z-index: 10
+        }
+
+        .t-room-gold {
+            background: var(--amberBg);
+            border: 1px solid var(--amberD)
+        }
+
+        /* SIDE PANEL (TOOLS) */
+        .side-panel {
+            background: var(--bg1);
+            border: 1px solid var(--bd);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .tool-btn {
+            background: var(--bg3);
+            border: 1px solid var(--bd);
+            color: var(--ts);
+            padding: 8px;
+            font-family: var(--mono);
+            font-size: 11px;
+            cursor: pointer;
+            text-align: left;
+            border-radius: 4px
+        }
+
+        .tool-btn:hover {
+            background: var(--bg4)
+        }
+
+        .tool-btn.active {
+            border-color: var(--amber);
+            color: var(--amber);
+            background: var(--amberBg)
+        }
+
+        .tool-label {
+            font-size: 9px;
+            color: var(--tt);
+            margin-bottom: 2px;
+            text-transform: uppercase
+        }
+
+        /* BOTTOM HUD */
+        .bottom-hud {
+            grid-column: 1 / span 2;
+            background: var(--bg1);
+            border: 1px solid var(--bd);
+            padding: 10px;
+            display: flex;
+            gap: 20px;
+            align-items: center
+        }
+
+        .info-box {
+            flex: 1;
+            font-family: var(--mono)
+        }
+
+        .info-title {
+            font-size: 10px;
+            color: var(--amberD)
+        }
+
+        .info-val {
+            font-size: 12px;
+            color: var(--tp)
+        }
+
+        .timer-box {
+            text-align: right;
+            min-width: 100px
+        }
+
+        .timer-val {
+            font-size: 20px;
+            color: var(--redH);
+            font-weight: bold
+        }
+
+        /* ENTITY */
+        .unit {
+            pointer-events: none;
+            transition: all 0.3s ease
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1)
+            }
+
+            50% {
+                transform: scale(1.1)
+            }
+
+            100% {
+                transform: scale(1)
+            }
+        }
+
+        .t-heart {
+            animation: pulse 2s infinite
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top">
+        <span class="title-logo">DUNGEON KEEPER <small style="font-size:9px">DEMO v0.1</small></span>
+        <div class="res-group">
+            <div class="res-item">💰 <span id="res-gold">1000</span>G</div>
+            <div class="res-item">🔮 <span id="res-mana">500</span>M</div>
+            <div class="res-item">🌾 <span id="res-food">200</span>F</div>
+        </div>
+    </div>
+
+    <div class="main-game">
+        <div id="map-container"></div>
+
+        <div class="side-panel">
+            <div class="tool-label">Command Mode</div>
+            <button class="tool-btn active" onclick="setMode('inspect')">🔍 INSPECT</button>
+            <button class="tool-btn" onclick="setMode('dig')">⛏ DIG (Cost: 0)</button>
+            <button class="tool-btn" onclick="setMode('build')">🏠 BUILD GOLD (500G)</button>
+            <button class="tool-btn" onclick="setMode('summon')">👾 SUMMON MONSTER (200M)</button>
+
+            <div class="div" style="margin:10px 0; border-top:1px solid var(--bd)"></div>
+            <div class="tool-label">Log</div>
+            <div id="game-log" style="font-size:9px; color:var(--tt); height:100px; overflow-y:auto">Welcome, Dark Lord.
+            </div>
+        </div>
+
+        <div class="bottom-hud">
+            <div class="info-box">
+                <div class="info-title">SELECTED TILE</div>
+                <div id="sel-name" class="info-val">None</div>
+                <div id="sel-desc" style="font-size:10px; color:var(--ts)">Select a tile to view details</div>
+            </div>
+
+            <div class="timer-box">
+                <div class="info-title">NEXT HERO WAVE</div>
+                <div id="wave-timer" class="timer-val">00:30</div>
+            </div>
+
+            <button class="tool-btn" style="height:100%; width:100px; border-color:var(--red); color:var(--redH)"
+                onclick="spawnHero()">侵攻開始</button>
+        </div>
+    </div>
+
+    <script>
+        /* ── GAME STATE ── */
+        const state = {
+            gold: 1000,
+            mana: 500,
+            food: 200,
+            mode: 'inspect', // inspect, dig, build, summon
+            timer: 30,
+            map: []
+        };
+
+        const mapSize = { x: 20, y: 15 };
+        const container = document.getElementById('map-container');
+
+        /* ── INITIALIZE MAP ── */
+        function initMap() {
+            for (let y = 0; y < mapSize.y; y++) {
+                state.map[y] = [];
+                for (let x = 0; x < mapSize.x; x++) {
+                    let type = 'rock';
+                    // Center Heart
+                    if (x >= 9 && x <= 10 && y >= 7 && y <= 8) type = 'heart';
+
+                    const tileData = { x, y, type, content: null };
+                    state.map[y][x] = tileData;
+
+                    const el = document.createElement('div');
+                    el.id = `tile-${x}-${y}`;
+                    el.className = `tile t-${type}`;
+                    el.onclick = () => handleTileClick(x, y);
+
+                    if (type === 'heart') el.innerHTML = '💀';
+                    if (type === 'rock') el.innerHTML = '░';
+
+                    container.appendChild(el);
+                }
+            }
+        }
+
+        /* ── GAME LOGIC ── */
+        function handleTileClick(x, y) {
+            const tile = state.map[y][x];
+            const el = document.getElementById(`tile-${x}-${y}`);
+
+            if (state.mode === 'inspect') {
+                updateInspector(tile);
+            }
+            else if (state.mode === 'dig') {
+                if (tile.type === 'rock') {
+                    tile.type = 'floor';
+                    el.className = 'tile t-floor';
+                    el.innerHTML = '';
+                    log(`Trench dug at [${x},${y}]`);
+                }
+            }
+            else if (state.mode === 'build') {
+                if (tile.type === 'floor' && state.gold >= 500) {
+                    state.gold -= 500;
+                    tile.type = 'room-gold';
+                    el.className = 'tile t-room-gold';
+                    el.innerHTML = '💰';
+                    log(`Gold room built! -500G`);
+                }
+            }
+            else if (state.mode === 'summon') {
+                if (tile.type !== 'rock' && state.mana >= 200) {
+                    state.mana -= 200;
+                    el.innerHTML = '👺';
+                    log(`Goblin summoned! -200M`);
+                }
+            }
+            updateUI();
+        }
+
+        function setMode(m) {
+            state.mode = m;
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.innerText.toLowerCase().includes(m)) btn.classList.add('active');
+            });
+        }
+
+        function updateInspector(tile) {
+            document.getElementById('sel-name').innerText = tile.type.toUpperCase();
+            const desc = {
+                'rock': 'Solid bedrock. Needs digging.',
+                'floor': 'Cleared space for movement and building.',
+                'heart': 'The core of your power. Protect it at all costs.',
+                'room-gold': 'Produces 10G every few seconds.'
+            };
+            document.getElementById('sel-desc').innerText = desc[tile.type] || '';
+        }
+
+        function updateUI() {
+            document.getElementById('res-gold').innerText = Math.floor(state.gold);
+            document.getElementById('res-mana').innerText = Math.floor(state.mana);
+            document.getElementById('res-food').innerText = Math.floor(state.food);
+        }
+
+        function log(msg) {
+            const logBox = document.getElementById('game-log');
+            logBox.innerHTML = `> ${msg}<br>` + logBox.innerHTML;
+        }
+
+        function spawnHero() {
+            const startX = Math.floor(Math.random() * mapSize.x);
+            const el = document.getElementById(`tile-${startX}-0`);
+            if (el) {
+                el.innerHTML = '🗡️';
+                el.style.color = 'var(--blueH)';
+                log(`A Hero has entered from the North!`);
+            }
+        }
+
+        /* ── GAME LOOP ── */
+        setInterval(() => {
+            // Passive income
+            state.mana += 0.5;
+            state.map.flat().forEach(t => {
+                if (t.type === 'room-gold') state.gold += 1;
+            });
+
+            // Timer
+            if (state.timer > 0) {
+                state.timer--;
+            } else {
+                state.timer = 30;
+                spawnHero();
+            }
+
+            const m = Math.floor(state.timer / 60);
+            const s = state.timer % 60;
+            document.getElementById('wave-timer').innerText =
+                `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+            updateUI();
+        }, 1000);
+
+        // Start
+        initMap();
+    </script>
+
+</body>
+
+</html>

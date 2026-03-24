@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DungeonKeeper Prototype v0.2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg0: #0e0c0a;
+            --bg1: #161310;
+            --bg2: #1e1a16;
+            --bg3: #26211b;
+            --bg4: #302a22;
+            --bd: #3a3228;
+            --bdh: #4d4338;
+            --tp: #e8e0d0;
+            --ts: #9a8e7e;
+            --tt: #5c5248;
+            --amber: #c8861a;
+            --amberH: #e09a20;
+            --amberD: #7a5010;
+            --amberBg: #1e1508;
+            --blue: #4a7fa0;
+            --blueH: #6a9fc0;
+            --blueBg: #0a1520;
+            --red: #8a3a3a;
+            --redH: #b05050;
+            --redBg: #1a0808;
+            --mono: 'IBM Plex Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: var(--bg0);
+            color: var(--tp);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .top {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            height: 44px;
+            background: var(--bg1);
+            border-bottom: 1px solid var(--bd);
+            justify-content: space-between
+        }
+
+        .title-logo {
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            color: var(--amber);
+            letter-spacing: .1em
+        }
+
+        .res-group {
+            display: flex;
+            gap: 12px
+        }
+
+        .res-item {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--ts);
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        .main-game {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 220px;
+            grid-template-rows: 1fr 120px;
+            gap: 4px;
+            padding: 4px;
+            background: var(--bg0)
+        }
+
+        #map-container {
+            background: #050505;
+            border: 1px solid var(--bd);
+            position: relative;
+            overflow: auto;
+            display: grid;
+            grid-template-columns: repeat(20, 32px);
+            grid-template-rows: repeat(15, 32px);
+            gap: 1px;
+            padding: 10px;
+            align-content: start;
+            justify-content: start
+        }
+
+        .tile {
+            width: 32px;
+            height: 32px;
+            border-radius: 2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            position: relative;
+            transition: background 0.2s
+        }
+
+        .tile:hover {
+            filter: brightness(1.5);
+            outline: 1px solid var(--amber)
+        }
+
+        .t-rock {
+            background: #1a1510;
+            color: #3a3228
+        }
+
+        .t-floor {
+            background: #0e1a0e;
+            border: 1px solid #1a2a1a
+        }
+
+        .t-heart {
+            background: #2a0a0a;
+            border: 1px solid #6a1010;
+            box-shadow: inset 0 0 10px #ff000044;
+            z-index: 10
+        }
+
+        .t-room-gold {
+            background: var(--amberBg);
+            border: 1px solid var(--amberD)
+        }
+
+        .side-panel {
+            background: var(--bg1);
+            border: 1px solid var(--bd);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .tool-btn {
+            background: var(--bg3);
+            border: 1px solid var(--bd);
+            color: var(--ts);
+            padding: 8px;
+            font-family: var(--mono);
+            font-size: 10px;
+            cursor: pointer;
+            text-align: left;
+            border-radius: 4px
+        }
+
+        .tool-btn:hover {
+            background: var(--bg4)
+        }
+
+        .tool-btn.active {
+            border-color: var(--amber);
+            color: var(--amber);
+            background: var(--amberBg)
+        }
+
+        .bottom-hud {
+            grid-column: 1 / span 2;
+            background: var(--bg1);
+            border: 1px solid var(--bd);
+            padding: 10px;
+            display: flex;
+            gap: 20px;
+            align-items: center
+        }
+
+        .info-box {
+            flex: 1;
+            font-family: var(--mono)
+        }
+
+        .unit-sprite {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.4s linear;
+            pointer-events: none;
+            z-index: 100
+        }
+
+        .hp-bar-bg {
+            position: absolute;
+            top: -4px;
+            left: 4px;
+            width: 24px;
+            height: 3px;
+            background: #000;
+            border: 1px solid #333
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            background: #f00;
+            width: 100%
+        }
+
+        .prog-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: var(--amber);
+            transition: width 0.2s
+        }
+
+        @keyframes shake {
+            0% {
+                transform: translate(0, 0)
+            }
+
+            25% {
+                transform: translate(2px, 0)
+            }
+
+            50% {
+                transform: translate(-2px, 0)
+            }
+
+            75% {
+                transform: translate(2px, 0)
+            }
+
+            100% {
+                transform: translate(0, 0)
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top">
+        <span class="title-logo">DUNGEON KEEPER <small style="font-size:9px">AI PROTOTYPE v0.2</small></span>
+        <div class="res-group">
+            <div class="res-item">💰 <span id="res-gold">1000</span>G</div>
+            <div class="res-item">🔮 <span id="res-mana">500</span>M</div>
+        </div>
+    </div>
+
+    <div class="main-game">
+        <div id="map-container"></div>
+        <div class="side-panel">
+            <button class="tool-btn active" onclick="setMode('inspect')">🔍 INSPECT</button>
+            <button class="tool-btn" onclick="setMode('dig')">⛏ DIG ROCK (0G)</button>
+            <button class="tool-btn" onclick="setMode('build')">🏠 BUILD GOLD (500G)</button>
+            <button class="tool-btn" onclick="setMode('summon')">👾 SUMMON GOBLIN (200M)</button>
+            <div style="border-top:1px solid var(--bd); margin:5px 0"></div>
+            <div id="game-log"
+                style="font-size:10px; color:var(--tt); height:150px; overflow-y:auto; font-family:var(--mono)">> Lord,
+                your dungeon awaits.</div>
+        </div>
+        <div class="bottom-hud">
+            <div class="info-box">
+                <div id="sel-name" style="color:var(--amber)">None</div>
+                <div id="sel-desc" style="font-size:11px; color:var(--ts)">Select a tile</div>
+            </div>
+            <div style="text-align:right">
+                <div style="font-size:10px; color:var(--redH)">HERO INVASION</div>
+                <div id="wave-timer" style="font-size:20px; font-weight:bold; color:var(--redH)">00:30</div>
+            </div>
+            <button class="tool-btn" style="color:var(--redH); border-color:var(--red)"
+                onclick="spawnHero()">侵攻開始</button>
+        </div>
+    </div>
+
+    <script>
+        const state = { gold: 1000, mana: 500, mode: 'inspect', timer: 30, map: [], jobQueue: [], units: [], heroes: [] };
+        const mapSize = { x: 20, y: 15 };
+        const container = document.getElementById('map-container');
+
+        // --- ユニットクラス ---
+        class Entity {
+            constructor(x, y, icon, isHero = false) {
+                this.x = x; this.y = y; this.hp = 100; this.maxHp = 100; this.icon = icon; this.isHero = isHero;
+                this.target = null; this.isWorking = false;
+                this.el = document.createElement('div');
+                this.el.className = 'unit-sprite';
+                this.el.innerHTML = `<div class="hp-bar-bg"><div class="hp-bar-fill" id="hp-${this.isHero ? 'h' : 'g'}-${state.units.length}"></div></div>${icon}`;
+                container.appendChild(this.el);
+                this.updateStyle();
+            }
+            updateStyle() {
+                this.el.style.left = `${this.x * 33 + 10}px`;
+                this.el.style.top = `${this.y * 33 + 10}px`;
+                const hpFill = this.el.querySelector('.hp-bar-fill');
+                if (hpFill) hpFill.style.width = (this.hp / this.maxHp * 100) + "%";
+            }
+        }
+
+        class Goblin extends Entity {
+            update() {
+                if (this.isWorking || this.hp <= 0) return;
+                // 戦闘AI: 隣接する英雄を攻撃
+                const enemy = state.heroes.find(h => Math.abs(h.x - this.x) <= 1 && Math.abs(h.y - this.y) <= 1);
+                if (enemy) { this.attack(enemy); return; }
+                // 作業AI: 予約リストから仕事を探す
+                if (!this.target && state.jobQueue.length > 0) {
+                    this.target = state.jobQueue.shift();
+                    log(`Goblin heading to ${this.target.type} at [${this.target.x},${this.target.y}]`);
+                }
+                if (this.target) {
+                    if (this.x === this.target.x && this.y === this.target.y) { this.work(); }
+                    else { this.moveToward(this.target.x, this.target.y); }
+                }
+            }
+            moveToward(tx, ty) {
+                if (this.x < tx) this.x++; else if (this.x > tx) this.x--;
+                if (this.y < ty) this.y++; else if (this.y > ty) this.y--;
+                this.updateStyle();
+            }
+            work() {
+                this.isWorking = true;
+                const tileEl = document.getElementById(`tile-${this.x}-${this.y}`);
+                tileEl.innerHTML += `<div class="prog-bar" id="prog-${this.x}-${this.y}"></div>`;
+                let p = 0;
+                const itv = setInterval(() => {
+                    p += 10;
+                    const bar = document.getElementById(`prog-${this.x}-${this.y}`);
+                    if (bar) bar.style.width = p + "%";
+                    if (p >= 100) {
+                        clearInterval(itv);
+                        if (this.target.type === 'dig') finishDig(this.x, this.y);
+                        else finishBuild(this.x, this.y);
+                        this.target = null; this.isWorking = false;
+                    }
+                }, 200);
+            }
+            attack(target) {
+                this.isWorking = true;
+                this.el.style.animation = "shake 0.3s";
+                target.hp -= 10;
+                setTimeout(() => { this.el.style.animation = ""; this.isWorking = false; target.updateStyle(); }, 500);
+            }
+        }
+
+        // --- システム関数 ---
+        function initMap() {
+            for (let y = 0; y < mapSize.y; y++) {
+                state.map[y] = [];
+                for (let x = 0; x < mapSize.x; x++) {
+                    let type = (x >= 9 && x <= 10 && y >= 7 && y <= 8) ? 'heart' : 'rock';
+                    state.map[y][x] = { x, y, type, isReserved: false };
+                    const el = document.createElement('div');
+                    el.id = `tile-${x}-${y}`;
+                    el.className = `tile t-${type}`;
+                    el.innerHTML = type === 'heart' ? '💀' : '░';
+                    el.onclick = () => handleTileClick(x, y);
+                    container.appendChild(el);
+                }
+            }
+        }
+
+        function handleTileClick(x, y) {
+            const tile = state.map[y][x];
+            const el = document.getElementById(`tile-${x}-${y}`);
+            if (state.mode === 'inspect') {
+                document.getElementById('sel-name').innerText = tile.type.toUpperCase();
+                document.getElementById('sel-desc').innerText = `Coord: ${x},${y}. ` + (tile.isReserved ? "Reserved." : "Ready.");
+            } else if (state.mode === 'dig' && tile.type === 'rock' && !tile.isReserved) {
+                tile.isReserved = true; el.innerHTML = "⛏️"; state.jobQueue.push({ x, y, type: 'dig' });
+            } else if (state.mode === 'build' && tile.type === 'floor' && !tile.isReserved && state.gold >= 500) {
+                state.gold -= 500; tile.isReserved = true; el.innerHTML = "📐"; state.jobQueue.push({ x, y, type: 'build' });
+            } else if (state.mode === 'summon' && state.mana >= 200) {
+                state.mana -= 200; state.units.push(new Goblin(10, 8)); // Heart付近から召喚
+            }
+        }
+
+        function finishDig(x, y) {
+            const t = state.map[y][x]; t.type = 'floor'; t.isReserved = false;
+            const el = document.getElementById(`tile-${x}-${y}`);
+            el.className = 'tile t-floor'; el.innerHTML = '';
+        }
+
+        function finishBuild(x, y) {
+            const t = state.map[y][x]; t.type = 'room-gold'; t.isReserved = false;
+            const el = document.getElementById(`tile-${x}-${y}`);
+            el.className = 'tile t-room-gold'; el.innerHTML = '💰';
+        }
+
+        function spawnHero() {
+            const h = new Entity(Math.floor(Math.random() * mapSize.x), 0, '🗡️', true);
+            state.heroes.push(h);
+            log("A hero enters the dungeon!");
+        }
+
+        function log(m) {
+            const lb = document.getElementById('game-log');
+            lb.innerHTML = `> ${m}<br>` + lb.innerHTML;
+        }
+
+        // --- メインループ ---
+        setInterval(() => {
+            state.mana += 0.5;
+            state.map.flat().forEach(t => { if (t.type === 'room-gold') state.gold += 0.5; });
+            state.units.forEach(u => u.update());
+            state.heroes.forEach((h, i) => {
+                if (h.hp <= 0) { h.el.remove(); state.heroes.splice(i, 1); log("Hero defeated!"); return; }
+                // 英雄はただ南へ進む（簡易）
+                if (Math.random() > 0.7) { h.y++; h.updateStyle(); }
+                if (h.y >= mapSize.y) { h.el.remove(); state.heroes.splice(i, 1); }
+            });
+            if (state.timer > 0) state.timer--; else { state.timer = 30; spawnHero(); }
+            document.getElementById('wave-timer').innerText = `00:${state.timer.toString().padStart(2, '0')}`;
+            document.getElementById('res-gold').innerText = Math.floor(state.gold);
+            document.getElementById('res-mana').innerText = Math.floor(state.mana);
+        }, 1000);
+
+        initMap();
+    </script>
+</body>
+
+</html>
